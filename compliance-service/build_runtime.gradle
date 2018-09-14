@@ -1,0 +1,64 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.3.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+		)
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'war'
+
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+war {
+	baseName = 'compliance-service'
+	version =  '0.0.1'
+}
+//configurations {
+// providedRuntime
+//}
+
+configurations {
+	providedRuntime
+
+}
+
+dependencies {
+	compile ('mysql:mysql-connector-java:5.1.41')
+
+	compile("org.springframework.boot:spring-boot-starter-websocket:1.5.3.RELEASE")
+	compile('org.springframework.boot:spring-boot-starter-data-jpa:1.5.3.RELEASE')
+	compile('org.springframework.boot:spring-boot-starter-parent:1.5.3.RELEASE')
+	compile('org.springframework.boot:spring-boot-autoconfigure:1.5.3.RELEASE')
+	providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
+	//testCompile('org.springframework.boot:spring-boot-starter-test')
+
+	compile ('org.springframework.cloud:spring-cloud-starter-config:1.4.2.RELEASE')
+	//Auth Dependencies
+	compile 'org.springframework.security.oauth:spring-security-oauth2:2.2.1.RELEASE'
+	//Kafka Dependencies
+	compile('org.springframework.cloud:spring-cloud-stream:1.2.2.RELEASE')
+	compile('org.springframework.cloud:spring-cloud-starter-stream-kafka:1.2.1.RELEASE')
+}
+
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Finchley.M2'
+	}
+}
+
