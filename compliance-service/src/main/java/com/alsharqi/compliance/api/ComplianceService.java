@@ -8,7 +8,9 @@ import com.alsharqi.compliance.compliancerequest.ComplianceRequestDocument;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequestRepository;
 import com.alsharqi.compliance.contact.Contact;
 import com.alsharqi.compliance.contact.ContactRepository;
+import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
+import com.alsharqi.compliance.notification.Notification;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -90,7 +92,7 @@ public class ComplianceService {
     public ComplianceRequest addRequest(ComplianceRequest complianceRequest){
 
         //--- loop through each compliance so that
-        /*if(complianceRequest.getCompliances()!=null && complianceRequest.getCompliances().size()>0){
+        if(complianceRequest.getCompliances()!=null && complianceRequest.getCompliances().size()>0){
             Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
             while(complianceIterator.hasNext()){
                 Compliance compliance = complianceIterator.next();
@@ -156,7 +158,7 @@ public class ComplianceService {
         }
         catch (Exception e){
             e.printStackTrace();
-        }*/
+        }
         //*******  Create Notification to send to the User about carrier booking  **********
 
         return complianceRequest;
