@@ -1,10 +1,12 @@
 package com.alsharqi.compliance;
 
+import com.alsharqi.compliance.events.CustomChannels;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -18,6 +20,7 @@ import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableResourceServer
+@EnableBinding(CustomChannels.class)
 public class ComplianceServiceApplication extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {

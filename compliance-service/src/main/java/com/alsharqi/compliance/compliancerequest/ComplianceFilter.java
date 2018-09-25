@@ -6,7 +6,7 @@ public class ComplianceFilter {
     private String status;
     private Date startDate;
     private Date endDate;
-    private Long customerId;
+    private String organizationName;
 
     public String getStatus() {
         return status;
@@ -32,11 +32,11 @@ public class ComplianceFilter {
         this.endDate = endDate;
     }
 
-    public Long getCustomerId() {
-        return customerId;
+    public String getOrganizationName() {
+        return organizationName;
     }
 
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
     }
 }

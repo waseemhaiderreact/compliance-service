@@ -21,9 +21,7 @@ public class Compliance {
     private Date dateOfCompletion;
     private String complianceNumber;
 
-    @JsonIgnore
-    @Lob
-    private byte[] documentContent;
+
 
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
@@ -78,14 +76,6 @@ public class Compliance {
         this.dateOfCompletion = dateOfCompletion;
     }
 
-    public byte[] getDocumentContent() {
-        return documentContent;
-    }
-
-    public void setDocumentContent(byte[] documentContent) {
-        this.documentContent = documentContent;
-    }
-
     public String getComplianceNumber() {
         return complianceNumber;
     }
@@ -100,5 +90,11 @@ public class Compliance {
 
     public void setComplianceRequest(ComplianceRequest complianceRequest) {
         this.complianceRequest = complianceRequest;
+    }
+
+    public void copyComplianceValues(Compliance cp){
+        this.status=cp.status;
+        this.dueDate=cp.dueDate;
+        this.dateOfCompletion=cp.dateOfCompletion;
     }
 }

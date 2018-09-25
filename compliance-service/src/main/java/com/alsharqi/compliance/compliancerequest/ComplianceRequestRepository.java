@@ -24,6 +24,11 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(Date sDate,Date eDate,String status,Pageable page);
     public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(Date sDate,Date eDate,Pageable page);
 
-    public Page<ComplianceRequest> findAllByCustomerIdAndStatus(Long customerId, String status, Pageable page);
-    public Page<ComplianceRequest> findAllByCustomerIdOrderByIdDesc(Long customerId, Pageable page);
+    public Page<ComplianceRequest> findAllByOrganizationNameAndStatus(String organizationName, String status, Pageable page);
+    public Page<ComplianceRequest> findAllByOrganizationNameOrderByIdDesc(String organizationName, Pageable page);
+
+    public ComplianceRequest findComplianceRequestByRequestNumber(String requestNumber);
+
+
+    
 }

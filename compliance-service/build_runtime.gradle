@@ -54,6 +54,8 @@ dependencies {
 	//Kafka Dependencies
 	compile('org.springframework.cloud:spring-cloud-stream:1.2.2.RELEASE')
 	compile('org.springframework.cloud:spring-cloud-starter-stream-kafka:1.2.1.RELEASE')
+	//itext for document generation
+	compile group: 'com.lowagie', name: 'itext', version: '4.2.0'
 }
 
 dependencyManagement {

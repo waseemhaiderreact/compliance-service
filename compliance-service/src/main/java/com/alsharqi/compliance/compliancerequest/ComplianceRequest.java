@@ -2,6 +2,7 @@ package com.alsharqi.compliance.compliancerequest;
 
 import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.contact.Contact;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -25,7 +26,11 @@ public class ComplianceRequest {
     private Date dateOfCompletion;
     private String shipmentNumber;
     private String requestNumber;
-    private Long customerId;
+    private String organizationName;
+    @JsonIgnore
+    @Lob
+    private byte[] content;
+
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="user")
@@ -102,6 +107,14 @@ public class ComplianceRequest {
         this.requestNumber = requestNumber;
     }
 
+    public byte[] getContent() {
+        return content;
+    }
+
+    public void setContent(byte[] content) {
+        this.content = content;
+    }
+
     public Contact getUser() {
         return user;
     }
@@ -110,12 +123,12 @@ public class ComplianceRequest {
         this.user = user;
     }
 
-    public Long getCustomerId() {
-        return customerId;
+    public String getOrganizationName() {
+        return organizationName;
     }
 
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
     }
 
     public Contact getIssuingAuthority() {
