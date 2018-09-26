@@ -608,10 +608,14 @@ public class ComplianceService {
         return complianceRequestRepository.findAll(new PageRequest(offset,limit));
     }
 
+    public Page<ComplianceRequest> getAllComplianceRequestsPending(int offset, int limit){
+        return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
+    }
+
     public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilter(ComplianceFilter complianceFilter,int offset, int limit){
 
         if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
-            return complianceRequestRepository.findAll(new PageRequest(offset,limit));
+            return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
         }
 
         if(complianceFilter.getOrganizationName()==null ) {
@@ -630,11 +634,15 @@ public class ComplianceService {
                 return x;
             }
             else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatus(complianceFilter.getOrganizationName(),"0",new PageRequest(offset,limit));
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),"0",new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_progress,new PageRequest(offset,limit));
                 return x;
             }
             else{
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatus(complianceFilter.getOrganizationName(),"1",new PageRequest(offset,limit));
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_complete,new PageRequest(offset,limit));
                 return x;
             }
 
@@ -656,10 +664,13 @@ public class ComplianceService {
                 return complianceRepository.findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),new PageRequest(offset,limit));
             }
             else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"0",new PageRequest(offset,limit));
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_pending,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_progress,new PageRequest(offset,limit));
             }
             else
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"1",new PageRequest(offset,limit));
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_complete,new PageRequest(offset,limit));
         }
         else{
             if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
@@ -667,11 +678,15 @@ public class ComplianceService {
                 return x;
             }
             else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatus(complianceFilter.getOrganizationName(),"0",new PageRequest(offset,limit));
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_pending,new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_progress,new PageRequest(offset,limit));
                 return x;
             }
             else{
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatus(complianceFilter.getOrganizationName(),"1",new PageRequest(offset,limit));
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_complete,new PageRequest(offset,limit));
                 return x;
             }
 
@@ -680,6 +695,10 @@ public class ComplianceService {
 
     public Page<Compliance> getAllCompliances(int offset, int limit){
         return complianceRepository.findAll(new PageRequest(offset,limit));
+    }
+
+    public Page<Compliance> getAllCompliancesPending(int offset, int limit){
+        return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_pending ,new PageRequest(offset,limit));
     }
 
     public ComplianceRequestDocument getCompliaceRequestDocument(String requestNumber){

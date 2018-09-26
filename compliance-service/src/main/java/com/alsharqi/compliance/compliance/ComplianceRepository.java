@@ -14,9 +14,12 @@ public interface ComplianceRepository extends JpaRepository<Compliance,Long> {
 
     //public Page<Compliance> findAllByCustomerIdAndStatus(Long customerId, String status, Pageable page);
     public Page<Compliance> findAllByComplianceRequest_OrganizationNameAndStatus(String organizationName, String status, Pageable page);
+    public Page<Compliance> findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(String organizationName, String status, Pageable page);
     //public Page<Compliance> findAllByCustomerIdOrderByIdDesc(Long customerId, Pageable page);
     public Page<Compliance> findAllByComplianceRequest_OrganizationNameOrderByIdDesc(String organizationName, Pageable page);
     public Page<Compliance> findAllByOrderByIdDesc(Pageable page);
 
     public Compliance findComplianceByComplianceNumber(String complianceNumber);
+
+    public Page<Compliance> findAllByStatusOrderByIdDesc(String status,Pageable page);
 }

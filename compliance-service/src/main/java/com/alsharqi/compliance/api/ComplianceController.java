@@ -49,12 +49,12 @@ public class ComplianceController {
             @RequestParam("offset") int offset,
             @RequestParam("limit") int limit) throws EmptyEntityTableException {
         if(offset>=0 && limit>0){
-            return Optional.ofNullable(complianceService.getAllComplianceRequests(offset,limit))
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsPending(offset,limit))
                     .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
         }
         else {
-            return Optional.ofNullable(complianceService.getAllComplianceRequests(0,paginationLimit))
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsPending(0,paginationLimit))
                     .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
         }
@@ -126,12 +126,12 @@ public class ComplianceController {
             @RequestParam("offset") int offset,
             @RequestParam("limit") int limit) throws EmptyEntityTableException {
         if(offset>=0 && limit>0){
-            return Optional.ofNullable(complianceService.getAllCompliances(offset,limit))
+            return Optional.ofNullable(complianceService.getAllCompliancesPending(offset,limit))
                     .map(resp -> new ResponseEntity<Page<Compliance>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request exists",0L));
         }
         else {
-            return Optional.ofNullable(complianceService.getAllCompliances(0,paginationLimit))
+            return Optional.ofNullable(complianceService.getAllCompliancesPending(0,paginationLimit))
                     .map(resp -> new ResponseEntity<Iterable<Compliance>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
         }
