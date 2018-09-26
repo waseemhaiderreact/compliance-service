@@ -554,24 +554,34 @@ public class ComplianceService {
             firstCell.setPaddingLeft(10);
             chunk = new Chunk("Status:  \n\t", normalBoldGray);
             second.add(chunk);
-            chunk = new Chunk(compliance.getStatus(), normal);
+            chunk = new Chunk(getComplianceRequestStatusLabel(compliance.getStatus()), normal);
             second.add(chunk);
             secondCell = new PdfPCell(second);
             secondCell.setBorder(0);
-
-            third = new Paragraph();
             fourth = new Paragraph();
             chunk = new Chunk("Due Date:  \n\t", normalBoldGray);
             third.add(chunk);
-            chunk = new Chunk(String.valueOf(compliance.getDueDate()), normal);
+            SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
+            if(compliance.getDueDate()!=null)
+            chunk = new Chunk(String.valueOf(sdf.format(compliance.getDueDate())), normal);
+            else
+                chunk = new Chunk("N/A", normal);
             third.add(chunk);
             thirdCell = new PdfPCell(third);
             thirdCell.setBorder(0);
             thirdCell.setPaddingLeft(10);
             chunk = new Chunk("Date Of Completion:  \n\t", normalBoldGray);
             fourth.add(chunk);
+            if(compliance.getDateOfCompletion()!=null){
             chunk = new Chunk(String.valueOf(compliance.getDateOfCompletion()), normal);
-            fourth.add(chunk);
+                fourth.add(chunk);
+            }
+            else{
+                chunk = new Chunk("N/A", normal);
+                fourth.add(chunk);
+            }
+
+
             fourthCell = new PdfPCell(fourth);
             fourthCell.setBorder(0);
 
@@ -583,6 +593,8 @@ public class ComplianceService {
             fifthCell = new PdfPCell(fifth);
             fifthCell.setBorder(0);
             fifthCell.setPaddingLeft(10);
+            //-- set col span of cell to 2
+            fifthCell.setColspan(2);
 
             //set border left color
             firstCell.setUseVariableBorders(true);
@@ -593,8 +605,8 @@ public class ComplianceService {
             table.addCell(thirdCell);
             table.addCell(fourthCell);
             table.addCell(fifthCell);
-            sixthCell.setBorder(0);
-            table.addCell(sixthCell);
+            //sixthCell.setBorder(0);
+            //table.addCell(sixthCell);
         }
         return table;
     }
@@ -770,5 +782,16 @@ public class ComplianceService {
         }
 
         return compliance;
+    }
+
+    String getComplianceRequestStatusLabel(String status){
+        if(compliance_request_status_pending.equalsIgnoreCase( status))
+            return "Pending";
+        else if(compliance_request_status_pending.equalsIgnoreCase( status))
+            return "In Progress";
+        else if(compliance_request_status_pending.equalsIgnoreCase( status))
+            return "Completed";
+        else
+            return "N/A";
     }
 }
