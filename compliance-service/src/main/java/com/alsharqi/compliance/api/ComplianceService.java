@@ -44,6 +44,9 @@ public class ComplianceService {
     @Autowired
     private NotificationSourceBean notificationSourceBean;
 
+    @Autowired
+    KafkaAsynService kafkaAsynService;
+
     private String compliance_request_status_pending="0";
     private String compliance_request_status_progress="1";
     private String compliance_request_status_complete="2";
@@ -141,6 +144,10 @@ public class ComplianceService {
             }
 
             complianceRequestRepository.save(complianceRequest);
+
+            //Send complianceRequest to Search Service-Ammar
+            kafkaAsynService.sendCompliance(complianceRequest);
+
             if(complianceRequest.getCompliances().size()>0) {
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
                 while(complianceIterator.hasNext()){
@@ -215,6 +222,8 @@ public class ComplianceService {
 
             try {
                 complianceRequestRepository.save(complianceRequest);
+                //send compliance request to search-service -Ammar
+                kafkaAsynService.sendCompliance(complianceRequest);
             } catch (Exception e) {
                 complianceRequest.setId(null);
                 e.printStackTrace();
@@ -772,6 +781,8 @@ public class ComplianceService {
             dbCompliance.copyComplianceValues(compliance);
             try {
                 complianceRepository.save(dbCompliance);
+                //send compliance to search-service -Ammar
+                kafkaAsynService.sendCompliance(dbCompliance.getComplianceRequest());
             } catch (Exception e) {
                 compliance.setId(null);
                 e.printStackTrace();
