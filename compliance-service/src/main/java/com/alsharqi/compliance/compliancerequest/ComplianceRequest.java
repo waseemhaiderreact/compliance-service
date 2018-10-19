@@ -31,15 +31,6 @@ public class ComplianceRequest {
     @Lob
     private byte[] content;
 
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="user")
-    private Contact user;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="authority")
-    private Contact issuingAuthority;
-
     @OneToMany(mappedBy="complianceRequest",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private Set<Compliance> compliances=new HashSet<Compliance>();
 
@@ -115,14 +106,6 @@ public class ComplianceRequest {
         this.content = content;
     }
 
-    public Contact getUser() {
-        return user;
-    }
-
-    public void setUser(Contact user) {
-        this.user = user;
-    }
-
     public String getOrganizationName() {
         return organizationName;
     }
@@ -131,13 +114,6 @@ public class ComplianceRequest {
         this.organizationName = organizationName;
     }
 
-    public Contact getIssuingAuthority() {
-        return issuingAuthority;
-    }
-
-    public void setIssuingAuthority(Contact issuingAuthority) {
-        this.issuingAuthority = issuingAuthority;
-    }
 
     public Set<Compliance> getCompliances() {
         return compliances;

@@ -1,5 +1,6 @@
 package com.alsharqi.compliance.contact;
 
+import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -19,12 +20,12 @@ public class Contact {
     private String phone;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "user", fetch=FetchType.EAGER)
-    private Set<ComplianceRequest> user = new HashSet<ComplianceRequest>();
+    @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private Set<Compliance> user = new HashSet<Compliance>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "issuingAuthority", fetch=FetchType.EAGER)
-    private Set<ComplianceRequest> issuingAuthorities = new HashSet<ComplianceRequest>();
+    @OneToMany(mappedBy = "issuingAuthority",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private Set<Compliance> issuingAuthorities = new HashSet<Compliance>();
 
     public Long getId() {
         return id;
@@ -66,19 +67,21 @@ public class Contact {
         this.phone = phone;
     }
 
-    public Set<ComplianceRequest> getUser() {
+    public Set<Compliance> getUser() {
         return user;
     }
 
-    public void setUser(Set<ComplianceRequest> user) {
+    public void setUser(Set<Compliance> user) {
         this.user = user;
     }
 
-    public Set<ComplianceRequest> getIssuingAuthorities() {
+    public Set<Compliance> getIssuingAuthorities() {
         return issuingAuthorities;
     }
 
-    public void setIssuingAuthorities(Set<ComplianceRequest> issuingAuthorities) {
+    public void setIssuingAuthorities(Set<Compliance> issuingAuthorities) {
         this.issuingAuthorities = issuingAuthorities;
     }
+
+
 }

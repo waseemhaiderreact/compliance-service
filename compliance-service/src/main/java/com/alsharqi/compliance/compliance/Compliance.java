@@ -21,12 +21,20 @@ public class Compliance {
     private Date dateOfCompletion;
     private String complianceNumber;
 
-
-
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JoinColumn(name="compliance_request_id")
     private ComplianceRequest complianceRequest;
+
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="user")
+    private Contact user;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="authority")
+    private Contact issuingAuthority;
+
 
     public Long getId() {
         return id;
@@ -92,9 +100,27 @@ public class Compliance {
         this.complianceRequest = complianceRequest;
     }
 
+    public Contact getUser() {
+        return user;
+    }
+
+    public void setUser(Contact user) {
+        this.user = user;
+    }
+
+    public Contact getIssuingAuthority() {
+        return issuingAuthority;
+    }
+
+    public void setIssuingAuthority(Contact issuingAuthority) {
+        this.issuingAuthority = issuingAuthority;
+    }
+
     public void copyComplianceValues(Compliance cp){
         this.status=cp.status;
         this.dueDate=cp.dueDate;
         this.dateOfCompletion=cp.dateOfCompletion;
+        this.user=cp.user;
+        this.issuingAuthority=cp.issuingAuthority;
     }
 }

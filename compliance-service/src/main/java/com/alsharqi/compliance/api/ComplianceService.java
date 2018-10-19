@@ -25,9 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 
 @Service
 public class ComplianceService {
@@ -50,10 +48,12 @@ public class ComplianceService {
     private String compliance_request_status_pending="0";
     private String compliance_request_status_progress="1";
     private String compliance_request_status_complete="2";
-    private String compliance_status_pending="0";
-    private String compliance_status_progress="1";
-    private String compliance_status_complete="2";
+    private String compliance_status_pending="1";
+    private String compliance_status_progress="2";
+    private String compliance_status_complete="3";
 
+    //DFF-1086
+    private String compliance_status_unassigned="0";
     /*Font section*/
     Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 16,
             Font.BOLD);
@@ -99,32 +99,9 @@ public class ComplianceService {
             Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
             while(complianceIterator.hasNext()){
                 Compliance compliance = complianceIterator.next();
-                compliance.setStatus(compliance_status_pending);
+                compliance.setStatus(compliance_status_unassigned);
                 compliance.setComplianceRequest(complianceRequest);
             }
-        }
-        //--- saving user and authorities
-
-        try{
-            if(complianceRequest.getUser()!=null) {
-                Contact contact = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getUser().getFirstName(),
-                        complianceRequest.getUser().getEmail());
-
-                if(contact==null)
-                    contactRepository.save(complianceRequest.getUser());
-            }
-
-            if(complianceRequest.getIssuingAuthority()!=null) {
-                Contact contact = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getIssuingAuthority().getFirstName(),
-                        complianceRequest.getIssuingAuthority().getEmail());
-
-                if(contact==null)
-                    contactRepository.save(complianceRequest.getIssuingAuthority());
-
-            }
-        }
-        catch (Exception e){
-            e.printStackTrace();
         }
 
         complianceRequest.setRequestDate(new Date());
@@ -153,7 +130,7 @@ public class ComplianceService {
                 while(complianceIterator.hasNext()){
                     Compliance currentCompliance = complianceIterator.next();
                     Notification aNotification = new Notification();
-                    aNotification.setMessage("Compliance Topic: "+ currentCompliance.getType());
+                    aNotification.setMessage("Compliance Created: "+ currentCompliance.getType());
                     aNotification.setUsername("Qafila");
                     aNotification.setReadStatus(false);
                     aNotification.setType("auto");
@@ -199,7 +176,7 @@ public class ComplianceService {
                 }
             }
 
-            Contact user = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getUser().getFirstName(),
+            /*Contact user = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getUser().getFirstName(),
                     complianceRequest.getUser().getEmail());
             if (user == null) {
                 contactRepository.save(complianceRequest.getUser());
@@ -218,7 +195,7 @@ public class ComplianceService {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
+            }*/
 
             try {
                 complianceRequestRepository.save(complianceRequest);
@@ -690,6 +667,9 @@ public class ComplianceService {
             else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
                 return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_progress,new PageRequest(offset,limit));
             }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_unassigned,new PageRequest(offset,limit));
+            }
             else
                 return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_complete,new PageRequest(offset,limit));
         }
@@ -706,6 +686,10 @@ public class ComplianceService {
                 Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_progress,new PageRequest(offset,limit));
                 return x;
             }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_unassigned,new PageRequest(offset,limit));
+                return x;
+            }
             else{
                 Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_complete,new PageRequest(offset,limit));
                 return x;
@@ -719,7 +703,7 @@ public class ComplianceService {
     }
 
     public Page<Compliance> getAllCompliancesPending(int offset, int limit){
-        return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_pending ,new PageRequest(offset,limit));
+        return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
     }
 
     public ComplianceRequestDocument getCompliaceRequestDocument(String requestNumber){
@@ -770,16 +754,23 @@ public class ComplianceService {
         return table;
     }
 
-    @Transactional
+
     public Compliance updateCompliance(Compliance compliance){
 
         Compliance dbCompliance=complianceRepository.findComplianceByComplianceNumber(compliance.getComplianceNumber());
 
         if(dbCompliance!=null) {
-            compliance.setComplianceRequest(dbCompliance.getComplianceRequest());
+            //compliance.setComplianceRequest(dbCompliance.getComplianceRequest());
             //--- loop through each compliance so that
             dbCompliance.copyComplianceValues(compliance);
             try {
+                //-- save contact first
+                Set<Contact> contactSet = new HashSet<Contact>();
+                contactSet.add(dbCompliance.getIssuingAuthority());
+                contactSet.add(dbCompliance.getUser());
+                contactRepository.save(contactSet);
+
+
                 complianceRepository.save(dbCompliance);
                 //send compliance to search-service -Ammar
                 kafkaAsynService.sendCompliance(dbCompliance.getComplianceRequest());
