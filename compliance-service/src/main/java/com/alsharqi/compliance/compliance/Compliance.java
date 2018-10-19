@@ -20,6 +20,7 @@ public class Compliance {
     private Date requestDate=new Date();
     private Date dateOfCompletion;
     private String complianceNumber;
+    private Date dateStarted;
 
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
@@ -90,6 +91,14 @@ public class Compliance {
 
     public void setComplianceNumber(String complianceNumber) {
         this.complianceNumber = complianceNumber;
+    }
+
+    public Date getDateStarted() {
+        return dateStarted;
+    }
+
+    public void setDateStarted(Date dateStarted) {
+        this.dateStarted = dateStarted;
     }
 
     public ComplianceRequest getComplianceRequest() {

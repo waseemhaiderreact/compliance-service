@@ -45,15 +45,15 @@ public class ComplianceService {
     @Autowired
     KafkaAsynService kafkaAsynService;
 
-    private String compliance_request_status_pending="0";
-    private String compliance_request_status_progress="1";
-    private String compliance_request_status_complete="2";
-    private String compliance_status_pending="1";
-    private String compliance_status_progress="2";
-    private String compliance_status_complete="3";
+    private final String compliance_request_status_pending="0";
+    private final String compliance_request_status_progress="1";
+    private final String compliance_request_status_complete="2";
+    private final String compliance_status_pending="1";
+    private final String compliance_status_progress="2";
+    private final String compliance_status_complete="3";
 
     //DFF-1086
-    private String compliance_status_unassigned="0";
+    private final String compliance_status_unassigned="0";
     /*Font section*/
     Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 16,
             Font.BOLD);
@@ -168,13 +168,18 @@ public class ComplianceService {
         if(dbComplianceRequest!=null) {
             complianceRequest.setContent(dbComplianceRequest.getContent());
             //--- loop through each compliance so that
-            if (complianceRequest.getCompliances() != null && complianceRequest.getCompliances().size() > 0) {
-                Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
+            if (dbComplianceRequest.getCompliances() != null && dbComplianceRequest.getCompliances().size() > 0) {
+                Set<Compliance> complianceSet = new HashSet<Compliance>() ;
+                Iterator<Compliance> complianceIterator = dbComplianceRequest.getCompliances().iterator();
                 while (complianceIterator.hasNext()) {
                     Compliance compliance = complianceIterator.next();
                     compliance.setComplianceRequest(complianceRequest);
+                    complianceSet.add(compliance);
                 }
+                complianceRequest.setCompliances(complianceSet);
             }
+
+
 
             /*Contact user = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getUser().getFirstName(),
                     complianceRequest.getUser().getEmail());
@@ -327,7 +332,7 @@ public class ComplianceService {
         leftCell.setPaddingLeft(10);
 
 
-        chunk = new Chunk("Trip Date: ",normalBoldGray);
+        chunk = new Chunk("Issue Date: ",normalBoldGray);
         second = new Paragraph();
         second.add(chunk);
         //TODO: to be revied as what date is needed to be added
@@ -508,7 +513,7 @@ public class ComplianceService {
 
     PdfPTable getCompliancesData(ComplianceRequest complianceRequest){
 
-        PdfPTable table = new PdfPTable(6);
+        PdfPTable table = new PdfPTable(7);
         //table.getDefaultCell().setBorder(0);
         table.setWidthPercentage(100);
         Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
@@ -520,6 +525,7 @@ public class ComplianceService {
             PdfPCell  fourthCell = new PdfPCell(new Paragraph());
             PdfPCell fifthCell = new PdfPCell(new Paragraph());
             PdfPCell sixthCell = new PdfPCell(new Paragraph());
+            PdfPCell seventhCell = new PdfPCell(new Paragraph());
             secondCell.setBackgroundColor(BaseColor.WHITE);
             thirdCell.setBackgroundColor(BaseColor.WHITE);
 
@@ -529,6 +535,7 @@ public class ComplianceService {
             Paragraph fourth = new Paragraph();
             Paragraph fifth = new Paragraph();
             Paragraph sixth = new Paragraph();
+            Paragraph seventh = new Paragraph();
             first = new Paragraph();
             second = new Paragraph();
             Chunk chunk = new Chunk("Number:  \n\t", normalBoldGray);
@@ -540,26 +547,27 @@ public class ComplianceService {
             firstCell.setPaddingLeft(10);
             chunk = new Chunk("Status:  \n\t", normalBoldGray);
             second.add(chunk);
-            chunk = new Chunk(getComplianceRequestStatusLabel(compliance.getStatus()), normal);
+            chunk = new Chunk(getComplianceStatusLabel(compliance.getStatus()), normal);
             second.add(chunk);
             secondCell = new PdfPCell(second);
             secondCell.setBorder(0);
             fourth = new Paragraph();
-            chunk = new Chunk("Due Date:  \n\t", normalBoldGray);
+            chunk = new Chunk("Request Date:  \n\t", normalBoldGray);
             third.add(chunk);
             SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
-            if(compliance.getDueDate()!=null)
-            chunk = new Chunk(String.valueOf(sdf.format(compliance.getDueDate())), normal);
+            if(compliance.getRequestDate()!=null)
+            chunk = new Chunk(String.valueOf(sdf.format(compliance.getRequestDate())), normal);
             else
                 chunk = new Chunk("N/A", normal);
             third.add(chunk);
             thirdCell = new PdfPCell(third);
             thirdCell.setBorder(0);
-            thirdCell.setPaddingLeft(10);
-            chunk = new Chunk("Date Of Completion:  \n\t", normalBoldGray);
+
+            chunk = new Chunk("Start Date:  \n\t", normalBoldGray);
             fourth.add(chunk);
-            if(compliance.getDateOfCompletion()!=null){
-            chunk = new Chunk(String.valueOf(compliance.getDateOfCompletion()), normal);
+            if(compliance.getDateStarted()!=null){
+                sdf=new SimpleDateFormat("dd/MM/yyyy");
+            chunk = new Chunk(String.valueOf(sdf.format(compliance.getDateStarted())), normal);
                 fourth.add(chunk);
             }
             else{
@@ -578,9 +586,42 @@ public class ComplianceService {
             fifth.add(chunk);
             fifthCell = new PdfPCell(fifth);
             fifthCell.setBorder(0);
-            fifthCell.setPaddingLeft(10);
+            //fifthCell.setPaddingLeft(10);
             //-- set col span of cell to 2
-            fifthCell.setColspan(2);
+            //fifthCell.setColspan(2);
+
+            chunk = new Chunk("Due Date:  \n\t", normalBoldGray);
+            sixth.add(chunk);
+            sdf=new SimpleDateFormat("dd/MM/yyyy");
+            if(compliance.getDueDate()!=null){
+                chunk = new Chunk(String.valueOf(sdf.format(compliance.getDueDate())), normal);
+                sixth.add(chunk);
+            }
+            else{
+                chunk = new Chunk("N/A", normal);
+                sixth.add(chunk);
+            }
+
+
+            sixthCell = new PdfPCell(sixth);
+            sixthCell.setBorder(0);
+
+            chunk = new Chunk("Completion Date:  \n\t", normalBoldGray);
+            seventh.add(chunk);
+            sdf=new SimpleDateFormat("dd/MM/yyyy");
+            if(compliance.getDateOfCompletion()!=null){
+                chunk = new Chunk(String.valueOf(sdf.format(compliance.getDateOfCompletion())), normal);
+                seventh.add(chunk);
+            }
+            else{
+                chunk = new Chunk("N/A", normal);
+                seventh.add(chunk);
+            }
+
+
+            seventhCell = new PdfPCell(seventh);
+            seventhCell.setBorder(0);
+
 
             //set border left color
             firstCell.setUseVariableBorders(true);
@@ -588,9 +629,14 @@ public class ComplianceService {
             firstCell.setBorderColorLeft(lightBlue);
             table.addCell(firstCell);
             table.addCell(secondCell);
+
+            //-- fifth is added before third as all dates must be together  
+            table.addCell(fifthCell);
             table.addCell(thirdCell);
             table.addCell(fourthCell);
-            table.addCell(fifthCell);
+
+            table.addCell(sixthCell);
+            table.addCell(seventhCell);
             //sixthCell.setBorder(0);
             //table.addCell(sixthCell);
         }
@@ -762,13 +808,39 @@ public class ComplianceService {
         if(dbCompliance!=null) {
             //compliance.setComplianceRequest(dbCompliance.getComplianceRequest());
             //--- loop through each compliance so that
+
+    String v1=compliance.getStatus();
+    String v2 = dbCompliance.getStatus();
+    /*System.out.println(compliance_status_complete==v1);
+    System.out.println(compliance_status_complete.equals(v1));
+    System.out.println(compliance_status_complete.indexOf(v1));
+    System.out.println(compliance_status_unassigned==(v1));
+    System.out.println(compliance_status_unassigned.equals(v1));
+    System.out.println(compliance_status_unassigned.indexOf(v1));
+    System.out.println(compliance_status_pending==(v1));
+    System.out.println(compliance_status_pending.equals(v1));
+    System.out.println(compliance_status_pending.indexOf(v1));
+            System.out.println(compliance_status_pending==(v1));
+            System.out.println(compliance_status_pending.equals(v1));
+            System.out.println(compliance_status_pending.indexOf(v1));*/
+            //--- set the started date if the status is changed to in progress
+            if(compliance_status_unassigned.equals(v1) && compliance.getUser()!=null && compliance_status_unassigned.equals(v2)) {
+                compliance.setStatus(compliance_status_pending);
+            }
+
+            System.out.println(compliance_status_progress.indexOf(dbCompliance.getStatus()));
+            if( compliance_status_progress.equals(v1) && compliance_status_progress.equals(v2)==false) {
+                dbCompliance.setDateStarted(new Date());
+            }
+
+            if( compliance_status_complete.equals(v1) && compliance_status_complete.equals(v2)==false) {
+                compliance.setDateOfCompletion(new Date());
+            }
             dbCompliance.copyComplianceValues(compliance);
             try {
                 //-- save contact first
-                Set<Contact> contactSet = new HashSet<Contact>();
-                contactSet.add(dbCompliance.getIssuingAuthority());
-                contactSet.add(dbCompliance.getUser());
-                contactRepository.save(contactSet);
+//                contactRepository.save(dbCompliance.getIssuingAuthority());
+//                contactRepository.save(dbCompliance.getUser());
 
 
                 complianceRepository.save(dbCompliance);
@@ -793,6 +865,19 @@ public class ComplianceService {
             return "In Progress";
         else if(compliance_request_status_pending.equalsIgnoreCase( status))
             return "Completed";
+        else
+            return "N/A";
+    }
+
+    String getComplianceStatusLabel(String status){
+        if(compliance_status_pending.equals( status))
+            return "Pending";
+        else if(compliance_status_pending.equals( status))
+            return "In Progress";
+        else if(compliance_status_complete.equals( status))
+            return "Completed";
+        else if(compliance_status_unassigned.equals( status))
+            return "Unassigned";
         else
             return "N/A";
     }
