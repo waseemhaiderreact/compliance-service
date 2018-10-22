@@ -131,5 +131,7 @@ public class Compliance {
         this.dateOfCompletion=cp.dateOfCompletion;
         this.user=cp.user;
         this.issuingAuthority=cp.issuingAuthority;
+        this.user.getUser().add(this);
+        this.issuingAuthority.getIssuingAuthorities().add(this);
     }
 }

@@ -630,7 +630,7 @@ public class ComplianceService {
             table.addCell(firstCell);
             table.addCell(secondCell);
 
-            //-- fifth is added before third as all dates must be together  
+            //-- fifth is added before third as all dates must be together
             table.addCell(fifthCell);
             table.addCell(thirdCell);
             table.addCell(fourthCell);
@@ -839,8 +839,8 @@ public class ComplianceService {
             dbCompliance.copyComplianceValues(compliance);
             try {
                 //-- save contact first
-//                contactRepository.save(dbCompliance.getIssuingAuthority());
-//                contactRepository.save(dbCompliance.getUser());
+                contactRepository.save(dbCompliance.getIssuingAuthority());
+                contactRepository.save(dbCompliance.getUser());
 
 
                 complianceRepository.save(dbCompliance);
