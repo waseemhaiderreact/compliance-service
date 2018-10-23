@@ -2,6 +2,7 @@ package com.alsharqi.compliance.compliancerequest;
 
 import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.contact.Contact;
+import com.alsharqi.compliance.location.Location;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
@@ -33,6 +34,9 @@ public class ComplianceRequest {
 
     @OneToMany(mappedBy="complianceRequest",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private Set<Compliance> compliances=new HashSet<Compliance>();
+
+    @Transient
+    private Location headOffice;
 
     public Long getId() {
         return id;
@@ -121,5 +125,13 @@ public class ComplianceRequest {
 
     public void setCompliances(Set<Compliance> compliances) {
         this.compliances = compliances;
+    }
+
+    public Location getHeadOffice() {
+        return headOffice;
+    }
+
+    public void setHeadOffice(Location headOffice) {
+        this.headOffice = headOffice;
     }
 }

@@ -10,10 +10,12 @@ import com.alsharqi.compliance.contact.Contact;
 import com.alsharqi.compliance.contact.ContactRepository;
 import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
+import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -179,6 +181,18 @@ public class ComplianceService {
                 complianceRequest.setCompliances(complianceSet);
             }
 
+            //-- check for status if complete, add date of completion
+            String requestStatus = complianceRequest.getStatus();
+            if(compliance_request_status_complete.equals(requestStatus) && compliance_status_complete.equals(dbComplianceRequest.getStatus())==false){
+                complianceRequest.setDateOfCompletion(new Date());
+                try {
+                    complianceRequest.setContent(generateDocumentRequestOrder(complianceRequest));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
 
 
             /*Contact user = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getUser().getFirstName(),
@@ -225,7 +239,12 @@ public class ComplianceService {
 
         try {
 
-            PdfWriter.getInstance(document, out);
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+
+            //QAF-1.0.3    - SB
+            //add footer
+            FooterTable event = new FooterTable(getFooterPdf());
+            writer.setPageEvent(event);
             document.open();
             Paragraph extraLines = new Paragraph();
 
@@ -235,11 +254,12 @@ public class ComplianceService {
 
             // add watermark
 
-            document.add(getDocumentSectionCompanyDetails(complianceRequest.getShipmentNumber()));
+            document.add(getDocumentSectionCompanyDetails(complianceRequest.getShipmentNumber(),complianceRequest.getOrganizationName(),complianceRequest.getHeadOffice()));
             document.add(addEmptyLineWithBorder(2));
             document.add(getDocumentSectionCompliancesHeading(complianceRequest));
             document.add(addEmptyLineWithBorder(2));
             document.add(getCompliancesData(complianceRequest));
+
             document.close();
         }
         catch(DocumentException ex){
@@ -288,7 +308,8 @@ public class ComplianceService {
         return headerTable;
     }
 
-    PdfPTable getDocumentSectionCompanyDetails(String shipmentNumber){
+    PdfPTable getDocumentSectionCompanyDetails(String shipmentNumber,String organizationName,Location headOffice){
+
         PdfPTable table = new PdfPTable(2);
         table.getDefaultCell().setBorder(0);
         table.setWidthPercentage(100);
@@ -298,8 +319,7 @@ public class ComplianceService {
             e.printStackTrace();
         }
 
-
-        Paragraph first = new Paragraph("Al Sharqi Shipping Co. LLC",normalBold);
+        Paragraph first = new Paragraph(organizationName,normalBold);
         Paragraph second;// = new Paragraph("Shipment Number: QAF-18001015",normal);
         PdfPCell leftCell = new PdfPCell(first);
 
@@ -357,7 +377,7 @@ public class ComplianceService {
         table.addCell(rightCell);
         float height = leftCell.getHeight();
 
-        chunk = new Chunk("151 Khalid Bin Walid Road, Umm Hurrair 1, Dubai,",normal);
+        chunk = new Chunk(headOffice.getAddress1()+", "+headOffice.getCity()+",",normal);
         first = new Paragraph();
         first.add(chunk);
         second = new Paragraph(" ",mini);
@@ -386,7 +406,7 @@ public class ComplianceService {
         table.addCell(rightCell);
 
 
-        first = new Paragraph("United Arab Emirates",normal);
+        first = new Paragraph(headOffice.getCountry(),normal);
         second = new Paragraph(" ",mini);
         leftCell = new PdfPCell(first);
         //leftCell.setPaddingLeft(10);
@@ -413,7 +433,10 @@ public class ComplianceService {
         chunk = new Chunk("Phone: ",normalBoldGray);
         first = new Paragraph();
         first.add(chunk);
-        chunk = new Chunk("121212 ",normal);
+
+        Contact headOfficeContact = headOffice.getContacts().iterator().next();
+
+        chunk = new Chunk(headOfficeContact.getPhone(),normal);
         first.add(chunk);
         second = new Paragraph(" ",mini);
         leftCell = new PdfPCell(first);
@@ -443,7 +466,7 @@ public class ComplianceService {
         chunk = new Chunk("Email: ",normalBoldGray);
         first = new Paragraph();
         first.add(chunk);
-        chunk = new Chunk("ae.finance@alsharqi.co ",normal);
+        chunk = new Chunk(headOfficeContact.getEmail(),normal);
 
         first.add(chunk);
         second = new Paragraph(" ",mini);
@@ -755,23 +778,15 @@ public class ComplianceService {
     public ComplianceRequestDocument getCompliaceRequestDocument(String requestNumber){
         ComplianceRequest complianceRequest = complianceRequestRepository.findComplianceRequestByRequestNumber(requestNumber);
 
-        try {
-            ComplianceRequestDocument complianceRequestDocument = new ComplianceRequestDocument();
-            complianceRequestDocument.setContent(generateDocumentRequestOrder(complianceRequest));
-            if(complianceRequest!=null){
 
+            ComplianceRequestDocument complianceRequestDocument = new ComplianceRequestDocument();
+            //complianceRequestDocument.setContent(generateDocumentRequestOrder(complianceRequest));
+            if(complianceRequest!=null){
+                complianceRequestDocument.setContent(complianceRequest.getContent());
                 return complianceRequestDocument;
             }
             else
                 return null;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        //complianceRequestRepository.save(complianceRequest);
-        return null;
-
     }
 
     /*For now this table has 2 columns. When converted to generic , pdf table will also be passed, aong with column numbers*/
@@ -811,18 +826,7 @@ public class ComplianceService {
 
     String v1=compliance.getStatus();
     String v2 = dbCompliance.getStatus();
-    /*System.out.println(compliance_status_complete==v1);
-    System.out.println(compliance_status_complete.equals(v1));
-    System.out.println(compliance_status_complete.indexOf(v1));
-    System.out.println(compliance_status_unassigned==(v1));
-    System.out.println(compliance_status_unassigned.equals(v1));
-    System.out.println(compliance_status_unassigned.indexOf(v1));
-    System.out.println(compliance_status_pending==(v1));
-    System.out.println(compliance_status_pending.equals(v1));
-    System.out.println(compliance_status_pending.indexOf(v1));
-            System.out.println(compliance_status_pending==(v1));
-            System.out.println(compliance_status_pending.equals(v1));
-            System.out.println(compliance_status_pending.indexOf(v1));*/
+
             //--- set the started date if the status is changed to in progress
             if(compliance_status_unassigned.equals(v1) && compliance.getUser()!=null && compliance_status_unassigned.equals(v2)) {
                 compliance.setStatus(compliance_status_pending);
@@ -881,4 +885,201 @@ public class ComplianceService {
         else
             return "N/A";
     }
+
+
+    //QAF-1.0.3  #111    - SB
+    //---class created to add footer
+    public class FooterTable extends PdfPageEventHelper {
+        protected PdfPTable footer;
+        public FooterTable(PdfPTable footer) {
+            this.footer = footer;
+        }
+        public void onEndPage(PdfWriter writer, Document document) {
+            footer.writeSelectedRows(0, -1, 36, 64, writer.getDirectContent());
+        }
+    }
+
+
+    PdfPTable getFooterPdf(){
+        PdfPTable table = new PdfPTable(2);
+        table.getDefaultCell().setBorder(0);
+        table.setTotalWidth(570F);
+        table.setWidthPercentage(100);
+        try {
+            table.setWidths(new float[] { 2, 1 });
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+
+
+        Paragraph first = new Paragraph("Al Sharqi Shipping Co. LLC",normalBold);
+        Paragraph second;// = new Paragraph("Shipment Number: QAF-18001015",normal);
+        PdfPCell leftCell = new PdfPCell(first);
+
+        Chunk chunk ;
+        second = new Paragraph();
+        //todo: to be removed
+        PdfPCell rightCell = new PdfPCell(second);
+        //leftCell.setPaddingLeft(10);
+        leftCell.setBorder(0);
+        //set border left color
+        leftCell.setUseVariableBorders(true);
+        //leftCell.setBorderWidthLeft(1);
+       // leftCell.setBorderColorLeft(lightBlue);
+        rightCell.setBorder(0);
+        //set border left color
+        rightCell.setUseVariableBorders(true);
+        //rightCell.setBorderWidthLeft(1);
+        //rightCell.setBorderColorLeft(lightBlue);
+        //rightCell.setPaddingLeft(10);
+        table.addCell(leftCell);
+        table.addCell(rightCell);
+
+        chunk = new Chunk("Address:",normalBoldGray);
+        first = new Paragraph();
+        first.add(chunk);
+
+        leftCell = new PdfPCell(first);
+        //leftCell.setPaddingLeft(10);
+
+
+        chunk = new Chunk("Phone: ",normalBoldGray);
+        second = new Paragraph();
+        second.add(chunk);
+        //TODO: to be revied as what date is needed to be added
+
+        chunk = new Chunk("1111-111-5599",normal);
+        second.add(chunk);
+        rightCell = new PdfPCell(second);
+        leftCell.setBorder(0);
+
+        //leftCell.setBorderWidthLeft(1);
+        //leftCell.setBorderColorLeft(lightBlue);
+        rightCell.setBorder(0);
+        //rightCell.setPaddingBottom(0);
+//        rightCell.setPaddingLeft(10);
+        rightCell.setBorder(0);
+        //set border left color
+        rightCell.setUseVariableBorders(true);
+        //rightCell.setBorderWidthLeft(1);
+        //rightCell.setBorderColorLeft(lightBlue);
+        //leftCell.setFixedHeight(2);
+        table.addCell(leftCell);
+        table.addCell(rightCell);
+        float height = leftCell.getHeight();
+
+        chunk = new Chunk("151 Khalid Bin Walid Road, Umm Hurrair 1, Dubai,",normal);
+        first = new Paragraph();
+        first.add(chunk);
+        second = new Paragraph(" ",mini);
+        leftCell = new PdfPCell(first);
+        leftCell.setPaddingTop(10);;
+
+        //leftCell.setPaddingLeft(10);
+        chunk = new Chunk("Email: ",normalBoldGray);
+        second = new Paragraph();
+        //todo: to be removed
+        second.add(chunk);
+        chunk = new Chunk("ae.finance@alsharqi.co",normal);
+        second.add(chunk);
+        rightCell = new PdfPCell(second);
+        leftCell.setBorder(0);
+        //set border left color
+        //leftCell.setPaddingLeft(10);
+        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingBottom(0L);
+        //leftCell.setBorderWidthLeft(1);
+        //leftCell.setBorderColorLeft(lightBlue);
+        rightCell.setBorder(0);
+        //set border left color
+        rightCell.setUseVariableBorders(true);
+        //rightCell.setBorderWidthLeft(1);
+        //rightCell.setBorderColorLeft(lightBlue);
+
+        rightCell.setPaddingTop(0);
+        table.addCell(leftCell);
+        table.addCell(rightCell);
+
+
+        first = new Paragraph("United Arab Emirates",normal);
+        second = new Paragraph(" ",mini);
+        leftCell = new PdfPCell(first);
+        //leftCell.setPaddingLeft(10);
+        rightCell = new PdfPCell(second);
+        rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        leftCell.setBorder(0);
+        //leftCell.setPaddingLeft(10);
+        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingBottom(0L);
+        //leftCell.setBorderWidthLeft(1);
+        //leftCell.setBorderColorLeft(lightBlue);
+
+
+        rightCell.setBorder(0);
+        //set border left color
+        rightCell.setUseVariableBorders(true);
+        //rightCell.setBorderWidthLeft(1);
+        //rightCell.setBorderColorLeft(lightBlue);
+        rightCell.setPaddingBottom(0);
+        rightCell.setPaddingTop(0);
+        table.addCell(leftCell);
+        table.addCell(rightCell);
+
+        //chunk = new Chunk("Phone: ",normalBoldGray);
+        first = new Paragraph();
+        //first.add(chunk);
+        //chunk = new Chunk("121212 ",normal);
+        // first.add(chunk);
+        second = new Paragraph(" ",mini);
+        leftCell = new PdfPCell(first);
+        //leftCell.setPaddingLeft(10);
+        rightCell = new PdfPCell(second);
+        rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        leftCell.setBorder(0);
+        //set border left color
+        leftCell.setUseVariableBorders(true);
+        //leftCell.setBorderWidthLeft(1);
+        //leftCell.setBorderColorLeft(lightBlue);
+        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingBottom(0L);
+        //leftCell.setPaddingLeft(10);
+        rightCell.setBorder(0);
+        //set border left color
+        rightCell.setUseVariableBorders(true);
+        //rightCell.setBorderWidthLeft(1);
+        //rightCell.setBorderColorLeft(lightBlue);
+        rightCell.setPaddingBottom(0);
+        rightCell.setPaddingTop(0);
+        table.addCell(leftCell);
+        table.addCell(rightCell);
+
+
+        /*Email*/
+        //chunk = new Chunk("Email: ",normalBoldGray);
+        first = new Paragraph();
+        //first.add(chunk);
+        //chunk = new Chunk("ae.finance@alsharqi.co ",normal);
+
+        //first.add(chunk);
+        second = new Paragraph(" ",mini);
+        leftCell = new PdfPCell(first);
+        //leftCell.setPaddingLeft(10);
+        rightCell = new PdfPCell(second);
+        rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        leftCell.setBorder(0);
+        //set border left color
+        leftCell.setUseVariableBorders(true);
+        //leftCell.setBorderWidthLeft(1);
+        //leftCell.setBorderColorLeft(lightBlue);
+        rightCell.setBorder(0);
+        //set border left color
+        rightCell.setUseVariableBorders(true);
+        //rightCell.setBorderWidthLeft(1);
+        //rightCell.setBorderColorLeft(lightBlue);
+        table.addCell(leftCell);
+        table.addCell(rightCell);
+
+        return table;
+    }
 }
+
