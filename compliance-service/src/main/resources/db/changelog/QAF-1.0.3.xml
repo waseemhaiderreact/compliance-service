@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="QAF-1.0.3-SB-1" author="SB" failOnError="true">
+        <comment>Chnaging db structure of whole db</comment>
+        <sql>
+
+            Alter TABLE t_compliance_request DROP FOREIGN KEY IF EXISTS FKis2twmlpi1n695txl3rnx5a43;
+            Alter TABLE t_compliance_request	DROP FOREIGN KEY FK2n4gcpbb97p6tjjhdbaan1t0c;
+
+            Alter TABLE t_compliance_request DROP COLUMN IF EXISTS t_compliance_request.user,
+            DROP COLUMN IF EXISTS t_compliance_request.authority;
+
+            Alter TABLE t_compliance Add COLUMN `authority` bigint(20) DEFAULT NULL,
+            Add COLUMN `user` bigint(20) DEFAULT NULL;
+
+            ALTER TABLE `t_compliance`
+            ADD KEY `FKqb9yo3asj5q80uvcvfitnny4c` (`authority`),
+            ADD KEY `FKlq2eqp0d1u31703or67sluuxm` (`user`);
+
+            ALTER TABLE `t_compliance`
+            ADD CONSTRAINT `FKlq2eqp0d1u31703or67sluuxm` FOREIGN KEY (`user`) REFERENCES `t_contact` (`id`),
+            ADD CONSTRAINT `FKqb9yo3asj5q80uvcvfitnny4c` FOREIGN KEY (`authority`) REFERENCES `t_contact` (`id`);
+
+        </sql>
+    </changeSet>
+</databaseChangeLog>

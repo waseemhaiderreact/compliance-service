@@ -64,6 +64,9 @@ dependencies {
 
 	//JMS Configuration
 
+	//liquibase
+	compile('org.liquibase:liquibase-core:3.4.1')
+
 }
 
 dependencyManagement {
