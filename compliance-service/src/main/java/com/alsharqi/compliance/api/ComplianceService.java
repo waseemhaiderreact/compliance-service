@@ -12,6 +12,7 @@ import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
+import com.alsharqi.compliance.response.DefaultResponse;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -20,6 +21,8 @@ import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -1080,6 +1083,19 @@ public class ComplianceService {
         table.addCell(rightCell);
 
         return table;
+    }
+
+    //Task 432 Re-index Compliance Request -Ammar
+    public DefaultResponse indexComplianceRequests(){
+        Authentication principal = SecurityContextHolder.getContext().getAuthentication();
+        if(principal.getAuthorities().toString().contains("ROLE_ADMIN")){
+            Iterable<ComplianceRequest> complianceRequests=complianceRequestRepository.findAll();
+            for(ComplianceRequest complianceRequest:complianceRequests){
+                kafkaAsynService.sendCompliance(complianceRequest);
+            }
+            return new DefaultResponse("N/A", "Compliance Requests sent to search-service successfully.", "F001");
+        }
+        return new DefaultResponse("N/A", "You need admin authentication to do this operation.", "F001");
     }
 }
 

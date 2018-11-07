@@ -5,6 +5,7 @@ import com.alsharqi.compliance.compliancerequest.ComplianceFilter;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequestDocument;
 import com.alsharqi.compliance.exception.EmptyEntityTableException;
+import com.alsharqi.compliance.response.DefaultResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -145,5 +146,16 @@ public class ComplianceController {
         return Optional.ofNullable(complianceService.getCompliaceRequestDocument(requestNumber))
                 .map(resp -> new ResponseEntity<ComplianceRequestDocument>(resp, HttpStatus.OK))
                 .orElseThrow(() -> new EmptyEntityTableException("No request exists",0L));
+    }
+
+    //Task:432 Re-Index Compliance Request -Ammar
+    @CrossOrigin
+    @PostMapping(path="/re-index")
+    public @ResponseBody
+    ResponseEntity ReIndexComplianceRequests() throws EmptyEntityTableException {
+        return Optional.ofNullable(complianceService.indexComplianceRequests())
+                .map(resp -> new ResponseEntity<DefaultResponse>(resp, HttpStatus.OK))
+                .orElseThrow(() -> new EmptyEntityTableException("No Compliance Request exists",0L));
+
     }
 }
