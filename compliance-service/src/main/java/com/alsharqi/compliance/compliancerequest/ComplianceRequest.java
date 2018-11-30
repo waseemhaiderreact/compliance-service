@@ -28,6 +28,7 @@ public class ComplianceRequest {
     private String shipmentNumber;
     private String requestNumber;
     private String organizationName;
+    private String organizationId;
     @JsonIgnore
     @Lob
     private byte[] content;
@@ -118,6 +119,13 @@ public class ComplianceRequest {
         this.organizationName = organizationName;
     }
 
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
+    }
 
     public Set<Compliance> getCompliances() {
         return compliances;
