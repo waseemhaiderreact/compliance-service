@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface ComplianceRepository extends JpaRepository<Compliance,Long> {
@@ -22,4 +23,9 @@ public interface ComplianceRepository extends JpaRepository<Compliance,Long> {
     public Compliance findComplianceByComplianceNumber(String complianceNumber);
 
     public Page<Compliance> findAllByStatusOrderByIdDesc(String status,Pageable page);
+
+    //-- squad pusrpose
+    public Page<Compliance> findAllByComplianceRequest_OrganizationIdInOrderByIdDesc(List<String> stringlist,Pageable page);
+    public Page<Compliance> findAllByDueDateAfterAndDueDateBeforeAndComplianceRequest_OrganizationIdOrderByIdDesc(Date sDate,Date eDate,List<String> stringlist,Pageable page);
+    public Page<Compliance> findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(Date sDate, Date eDate, String status,List<String> stringlist, Pageable page);
 }

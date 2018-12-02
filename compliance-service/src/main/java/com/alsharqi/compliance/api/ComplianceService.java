@@ -12,6 +12,8 @@ import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
+import com.alsharqi.compliance.organizationidclass.ListOrganization;
+import com.alsharqi.compliance.organizationidclass.OrganizationIdCLass;
 import com.alsharqi.compliance.response.DefaultResponse;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 
 @Service
 public class ComplianceService {
@@ -1096,6 +1099,134 @@ public class ComplianceService {
             return new DefaultResponse("N/A", "Compliance Requests sent to search-service successfully.", "F001");
         }
         return new DefaultResponse("N/A", "You need admin authentication to do this operation.", "F001");
+    }
+
+    public Iterable<Compliance> getAllCompliancesWithFilterBySquad(ListOrganization listOrganization, int offset, int limit){
+
+        List<String> stringList = new ArrayList<>();
+
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();
+
+             organizationIdCLassIterator.hasNext();){
+
+            OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
+
+            stringList.add(organizationIdCLass.getOrganizationid());
+
+        }
+
+
+        ComplianceFilter complianceFilter = listOrganization.getFilterObject();
+
+        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
+            return complianceRepository.findAllByComplianceRequest_OrganizationIdInOrderByIdDesc(stringList,new PageRequest(offset,limit));
+        }
+
+        if(complianceFilter.getOrganizationName()==null ) {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),stringList,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_pending,stringList,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_progress,stringList,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_unassigned,stringList,new PageRequest(offset,limit));
+            }
+            else
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_complete,stringList,new PageRequest(offset,limit));
+        }
+        else{
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(),new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_pending,new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_progress,new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_unassigned,new PageRequest(offset,limit));
+                return x;
+            }
+            else{
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_complete,new PageRequest(offset,limit));
+                return x;
+            }
+
+        }
+    }
+
+    public Page<ComplianceRequest> getAllComplianceRequestsPendingBySquad(int offset, int limit,ListOrganization listOrganization){
+
+        List<String> stringList = new ArrayList<>();
+
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();
+
+             organizationIdCLassIterator.hasNext();){
+
+            OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
+
+            stringList.add(organizationIdCLass.getOrganizationid());
+
+        }
+        return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+    }
+
+    public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilterAndSquad(ListOrganization listOrganization,int offset, int limit){
+
+        List<String> stringList = new ArrayList<>();
+
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();
+
+             organizationIdCLassIterator.hasNext();){
+
+            OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
+
+            stringList.add(organizationIdCLass.getOrganizationid());
+
+        }
+
+        ComplianceFilter complianceFilter = listOrganization.getFilterObject();
+        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
+            return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        }
+
+        if(complianceFilter.getOrganizationName()==null ) {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),stringList,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"0",stringList,new PageRequest(offset,limit));
+            }
+            else
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"1",stringList,new PageRequest(offset,limit));
+        }
+        else{
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),stringList,new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),"0",stringList,new PageRequest(offset,limit));
+                return x;
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_progress,stringList,new PageRequest(offset,limit));
+                return x;
+            }
+            else{
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_complete,stringList,new PageRequest(offset,limit));
+                return x;
+            }
+
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import com.alsharqi.compliance.compliancerequest.ComplianceFilter;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequestDocument;
 import com.alsharqi.compliance.exception.EmptyEntityTableException;
+import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.response.DefaultResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -157,5 +158,83 @@ public class ComplianceController {
                 .map(resp -> new ResponseEntity<DefaultResponse>(resp, HttpStatus.OK))
                 .orElseThrow(() -> new EmptyEntityTableException("No Compliance Request exists",0L));
 
+    }
+
+    /*
+    * Added by SB
+    * Created for squad purpose
+    * */
+    @RequestMapping(method = RequestMethod.POST,value="", params = {"offset","limit"})
+    public @ResponseBody
+    ResponseEntity getAllCompliancesWithPaginationAndSquads(
+            @RequestParam("offset") int offset,
+            @RequestParam("limit") int limit,@RequestBody ListOrganization listOrganization) throws EmptyEntityTableException {
+        if(offset>=0 && limit>0){
+            return Optional.ofNullable(complianceService.getAllCompliancesPending(offset,limit))
+                    .map(resp -> new ResponseEntity<Page<Compliance>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request exists",0L));
+        }
+        else {
+            return Optional.ofNullable(complianceService.getAllCompliancesPending(0,paginationLimit))
+                    .map(resp -> new ResponseEntity<Iterable<Compliance>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
+        }
+    }
+
+
+    /*
+     * Added by SB
+     * Created for squad purpose
+     * */
+    @RequestMapping(method = RequestMethod.POST,value="/filter", params = {"offset","limit"})
+    public @ResponseBody
+    ResponseEntity getAllComplianceWithPaginationAndFilterAndSquad(
+            @RequestParam("offset") int offset,
+            @RequestParam("limit") int limit, @RequestBody ListOrganization listOrganization) throws EmptyEntityTableException {
+        if(offset>=0 && limit>0){
+            return Optional.ofNullable(complianceService.getAllCompliancesWithFilterBySquad(listOrganization,offset,limit))
+                    .map(resp -> new ResponseEntity<Iterable<Compliance>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
+        }
+        else {
+            return Optional.ofNullable(complianceService.getAllCompliancesWithFilterBySquad(listOrganization,0,paginationLimit))
+                    .map(resp -> new ResponseEntity<Iterable<Compliance>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
+        }
+    }
+
+    //get compliance requests by squads
+    @RequestMapping(method = RequestMethod.POST,value="/requests", params = {"offset","limit"})
+    public @ResponseBody
+    ResponseEntity getAllComplianceRequestssWithPaginationAndSquad(
+            @RequestParam("offset") int offset,
+            @RequestParam("limit") int limit,@RequestBody ListOrganization listOrganization) throws EmptyEntityTableException {
+        if(offset>=0 && limit>0){
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsPendingBySquad(offset,limit,listOrganization))
+                    .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
+        }
+        else {
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsPendingBySquad(0,paginationLimit,listOrganization))
+                    .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST,value="/requests/filter", params = {"offset","limit"})
+    public @ResponseBody
+    ResponseEntity getAllComplianceRequestssWithPaginationAndFilterAndSquad(
+            @RequestParam("offset") int offset,
+            @RequestParam("limit") int limit, @RequestBody ListOrganization listOrganization) throws EmptyEntityTableException {
+        if(offset>=0 && limit>0){
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsWithFilterAndSquad(listOrganization,offset,limit))
+                    .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
+        }
+        else {
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsWithFilterAndSquad(listOrganization,0,paginationLimit))
+                    .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
+        }
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import scala.collection.immutable.List;
 
 import java.util.Date;
 
@@ -28,6 +29,10 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
 
     public ComplianceRequest findComplianceRequestByRequestNumber(String requestNumber);
 
-
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByIdDesc(String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeAndOrganizationIdInOrderByIdDesc(Date sDate,Date eDate,java.util.List<String> organizationIds,Pageable page);
+    public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(Date sDate,Date eDate,String status,java.util.List<String> organizationIds,Pageable page);
+    public Page<ComplianceRequest> findAllByOrganizationNameAndOrganizationIdInOrderByIdDesc(String organizationName,java.util.List<String> organizationIds ,Pageable page);
+    public Page<ComplianceRequest> findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(String organizationName, String status,java.util.List<String> organizationIds ,Pageable page);
     
 }
