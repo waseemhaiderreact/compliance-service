@@ -21,6 +21,7 @@ public class Compliance {
     private Date dateOfCompletion;
     private String complianceNumber;
     private Date dateStarted;
+    private boolean visibleToCustomer;
 
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
@@ -123,6 +124,14 @@ public class Compliance {
 
     public void setIssuingAuthority(Contact issuingAuthority) {
         this.issuingAuthority = issuingAuthority;
+    }
+
+    public boolean isVisibleToCustomer() {
+        return visibleToCustomer;
+    }
+
+    public void setVisibleToCustomer(boolean visibleToCustomer) {
+        this.visibleToCustomer = visibleToCustomer;
     }
 
     public void copyComplianceValues(Compliance cp){
