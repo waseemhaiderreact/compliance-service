@@ -237,4 +237,12 @@ public class ComplianceController {
                     .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
         }
     }
+
+    // edit compliance
+    @RequestMapping(value="",method= RequestMethod.DELETE,params = {"complianceNumber"})
+    @ResponseBody
+    public ResponseEntity deleteCompliance(@RequestParam("complianceNumber") String complianceNumber){
+        DefaultResponse defaultResponse = complianceService.deleteComplianceByComplianceNumber(complianceNumber);
+        return new ResponseEntity(defaultResponse,HttpStatus.OK);
+    }
 }

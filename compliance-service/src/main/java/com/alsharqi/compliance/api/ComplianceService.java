@@ -174,17 +174,19 @@ public class ComplianceService {
         ComplianceRequest dbComplianceRequest=complianceRequestRepository.findComplianceRequestByRequestNumber(complianceRequest.getRequestNumber());
 
         if(dbComplianceRequest!=null) {
+            Set<Compliance> complianceSet = new HashSet<Compliance>() ;
             complianceRequest.setContent(dbComplianceRequest.getContent());
             //--- loop through each compliance so that
-            if (dbComplianceRequest.getCompliances() != null && dbComplianceRequest.getCompliances().size() > 0) {
-                Set<Compliance> complianceSet = new HashSet<Compliance>() ;
-                Iterator<Compliance> complianceIterator = dbComplianceRequest.getCompliances().iterator();
+            if (complianceRequest.getCompliances() != null && complianceRequest.getCompliances().size() > 0) {
+
+                Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
                 while (complianceIterator.hasNext()) {
+
+
                     Compliance compliance = complianceIterator.next();
-                    compliance.setComplianceRequest(complianceRequest);
-                    complianceSet.add(compliance);
+                        complianceSet.add(compliance);
                 }
-                complianceRequest.setCompliances(complianceSet);
+                //complianceRequest.setCompliances(complianceSet);
             }
 
             //-- check for status if complete, add date of completion
@@ -199,31 +201,18 @@ public class ComplianceService {
             }
 
 
-
-
-            /*Contact user = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getUser().getFirstName(),
-                    complianceRequest.getUser().getEmail());
-            if (user == null) {
-                contactRepository.save(complianceRequest.getUser());
-            }
-
-
-            Contact authority = contactRepository.findContactByFirstNameAndEmail(complianceRequest.getIssuingAuthority().getFirstName(),
-                    complianceRequest.getIssuingAuthority().getEmail());
-            if (authority == null) {
-                contactRepository.save(complianceRequest.getIssuingAuthority());
-            }
-            //check if the status is complete, create document.
-            if (compliance_request_status_complete.equalsIgnoreCase(complianceRequest.getStatus())) {
-                try {
-                    complianceRequest.setContent(generateDocumentRequestOrder(complianceRequest));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }*/
-
             try {
+
+                if(complianceSet.size()>0){
+                    complianceSet = addComplianceSet(complianceSet);
+                    Iterator<Compliance> iterator = complianceSet.iterator();
+                    while(iterator.hasNext())
+                    iterator.next().setComplianceRequest(complianceRequest);
+                }
+
+                complianceRequest.setCompliances(complianceSet);
                 complianceRequestRepository.save(complianceRequest);
+
                 //send compliance request to search-service -Ammar
                 kafkaAsynService.sendCompliance(complianceRequest);
             } catch (Exception e) {
@@ -235,7 +224,7 @@ public class ComplianceService {
             complianceRequest.setId(null);
         }
 
-        return complianceRequest;
+        return (complianceRequest);
     }
 
     byte[] generateDocumentRequestOrder(ComplianceRequest complianceRequest)  throws IOException {
@@ -1226,6 +1215,43 @@ public class ComplianceService {
                 return x;
             }
 
+        }
+    }
+
+    /*
+    * Q418-1.2 #757
+    * implement delete conpliance functionality
+    *
+    * */
+    @Transactional
+    public DefaultResponse deleteComplianceByComplianceNumber(String complianceNumber){
+        try{
+
+            complianceRepository.deleteComplianceByComplianceNumber(complianceNumber);
+            return new DefaultResponse(complianceNumber,"Deleted Successfully","D001");
+        }catch(Exception e){
+            return new DefaultResponse(complianceNumber,"Could not delete"+e.getMessage(),"D001");
+        }
+    }
+
+    public Set<Compliance>  addComplianceSet(Set<Compliance> complianceSet){
+        try{
+            complianceRepository.save(complianceSet);
+
+            Iterator<Compliance> complianceIterator = complianceSet.iterator();
+            while (complianceIterator.hasNext()) {
+
+                Compliance compliance = complianceIterator.next();
+                if(compliance.getComplianceNumber()==null){
+                    compliance.setComplianceNumber(getComplianceNumber(compliance.getId()));
+                }
+
+            }
+            complianceRepository.save(complianceSet);
+
+            return complianceSet;
+        }catch(Exception e){
+            return null;
         }
     }
 }
