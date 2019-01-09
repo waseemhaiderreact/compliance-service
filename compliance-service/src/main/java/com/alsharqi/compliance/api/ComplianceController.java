@@ -245,4 +245,11 @@ public class ComplianceController {
         DefaultResponse defaultResponse = complianceService.deleteComplianceByComplianceNumber(complianceNumber);
         return new ResponseEntity(defaultResponse,HttpStatus.OK);
     }
+
+    @RequestMapping(value="/requests",method= RequestMethod.DELETE,params = {"complianceRequestNumber"})
+    @ResponseBody
+    public ResponseEntity deleteComplianceRequest(@RequestParam("complianceRequestNumber") String complianceRequestNumber){
+        DefaultResponse defaultResponse = complianceService.deleteComplianceRequestByComplianceRequestNumber(complianceRequestNumber);
+        return new ResponseEntity(defaultResponse,HttpStatus.OK);
+    }
 }

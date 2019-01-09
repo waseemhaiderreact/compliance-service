@@ -3,10 +3,13 @@ package com.alsharqi.compliance.compliancerequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import scala.collection.immutable.List;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 
 @CrossOrigin
@@ -34,5 +37,9 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(Date sDate,Date eDate,String status,java.util.List<String> organizationIds,Pageable page);
     public Page<ComplianceRequest> findAllByOrganizationNameAndOrganizationIdInOrderByIdDesc(String organizationName,java.util.List<String> organizationIds ,Pageable page);
     public Page<ComplianceRequest> findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(String organizationName, String status,java.util.List<String> organizationIds ,Pageable page);
-    
+
+    @Transactional
+    @Modifying
+    @Query("Delete  from ComplianceRequest c where c.requestNumber = ?1 ")
+    public void deleteComplianceRequestByRequestNumber(String complianceRequestNumber);
 }

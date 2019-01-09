@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="318f6110-872e-4569-a76c-ff72a256a45e" activeEnvironment="Default" name="compliance-service" resourceRoot="" soapui-version="5.4.0" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:interface xsi:type="con:RestService" id="50c2d0e7-b4d8-4290-be91-15663f23fc3a" wadlVersion="http://wadl.dev.java.net/2009/02" name="http://localhost:8211" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings/><con:definitionCache type="TEXT" rootPart=""/><con:endpoints><con:endpoint>http://localhost:8211</con:endpoint></con:endpoints><con:resource name="" path="/compliances/requests" id="198af4ef-cc76-4fe1-8825-d96e246d31f4"><con:settings/><con:parameters><con:parameter><con:name>complianceRequestNumber</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter></con:parameters><con:method name="1" id="12b45800-d4f9-4934-8974-86c3a9607986" method="PUT"><con:settings/><con:parameters/><con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>401</con:status><con:params/><con:element xmlns:req="http://localhost/compliances/requests">req:Fault</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:req="http://localhost/compliances/requests">req:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/html;charset=utf-8</con:mediaType><con:status>403</con:status><con:params/><con:element>html</con:element></con:representation><con:request name="Request 1" id="942fec56-b556-4cfe-871b-693280145dc1" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer 4b12abd1-94ca-42d2-a68a-f9e35488bee4" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#Endpoint}</con:endpoint><con:request>{
+	"id": 5,
+	"status": "2",
+	"dueDate": "2018-10-25T19:00:00.000+0000",
+	"shipmentNumber": "QAF-18001446",
+	"user": null,
+	"issuingAuthority": null,
+	"compliances": [{
+		"id": 7,
+		"requestDate": "2018-10-18T01:59:46.000+0000",
+		"dateOfCompletion": null,
+		"type": "Duty Exemption Application",
+		"dueDate": "2018-10-25T14:00:00.000+0000",
+		"status": "1",
+		"complianceNumber": "CL-180007"
+	},
+	{
+		"id": 6,
+		"requestDate": "2018-10-17T15:59:46.000+0000",
+		"dateOfCompletion": null,
+		"type": "Customs Inspection",
+		"dueDate": "2018-10-25T04:00:00.000+0000",
+		"status": "3",
+		"complianceNumber": "CL-180006"
+	}],
+	"type": "Custom Inspection/Duty",
+	"typeIndex": 0,
+	"contactUserId": "",
+	"contactIssuingAuthority": "",
+	"organizationName": "ACME",
+	"requestNumber": "CR-180005",
+	"requestDate": "2018-10-18T06:59:46.000+0000",
+	"headOffice": {
+		"id": 25,
+		"name": "jebel office",
+		"address1": "jebel industrial",
+		"address2": "Jebel Ali Industrial Area",
+		"city": "Dubai",
+		"state": "Dubai",
+		"countryCode": "AE",
+		"zipCode": "",
+		"residential": false,
+		"loadingDock": false,
+		"appointment": false,
+		"notes": null,
+		"lat": 24.9952814,
+		"lng": 55.12103030000003,
+		"type": "office",
+		"receivingHours": "",
+		"contacts": [{
+			"id": 16,
+			"firstName": "abc",
+			"lastName": "asd",
+			"phone": "1111",
+			"email": "a@a.com"
+		},
+		{
+			"id": 5,
+			"firstName": "bugs",
+			"lastName": "bunny",
+			"phone": "1212121212",
+			"email": "bugs@bunn.com"
+		}],
+		"headOffice": true
+	}
+}</con:request><con:originalUri>http://localhost/compliances/requests</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="complianceRequestNumber" value="" xmlns="http://eviware.com/soapui/config"/></con:parameters><con:parameterOrder><con:entry>complianceRequestNumber</con:entry></con:parameterOrder></con:request></con:method><con:method name="delete compliance request" id="ef77d732-ed59-4b4a-830c-b8a54b626529" method="DELETE"><con:settings/><con:parameters/><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="FAULT"><con:mediaType>text/html;charset=utf-8</con:mediaType><con:status>403</con:status><con:params/><con:element>html</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:req="http://dev.qafi.la/compliance-service-0.0.1/compliances/requests">req:Response</con:element></con:representation><con:request name="delete by request number" id="dfedd524-9e9e-4e49-9ce4-ff7a42e8641e" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer b424d96b-ae56-45f0-a3c6-95b01bd87f16" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#Endpoint}</con:endpoint><con:request/><con:originalUri>http://dev.qafi.la/compliance-service-0.0.1/compliances/requests</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="complianceRequestNumber" value="CR-180014" xmlns="http://eviware.com/soapui/config"/></con:parameters><con:parameterOrder><con:entry>complianceRequestNumber</con:entry></con:parameterOrder></con:request></con:method><con:method name="Create Request" id="6ff2b4f4-b2e8-4419-b9aa-9ecf96aca608" method="POST"><con:settings/><con:parameters/><con:request name="create compliance request" id="2c8561d6-7a89-4a14-95b7-9249f48424cb" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:endpoint>${#Project#EndpointAuth}</con:endpoint><con:request/><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:request></con:method></con:resource><con:resource name="token" path="/oauth/token" id="94c13e41-a317-4389-884c-ce57e2d0b39e"><con:settings/><con:parameters><con:parameter><con:name>grant_type</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter><con:parameter><con:name>scope</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter><con:parameter><con:name>username</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter><con:parameter><con:name>password</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter></con:parameters><con:method name="Method 1" id="44b11487-70d3-418f-a236-0c3c6be7cf94" method="POST"><con:settings/><con:parameters/><con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>401 404</con:status><con:params/><con:element xmlns:tok="http://localhost/oaut/token">tok:Fault</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:tok="http://localhost/oaut/token">tok:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType xsi:nil="true"/><con:status>404</con:status><con:params/><con:element>data</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType xsi:nil="true"/><con:status>0</con:status><con:params/><con:element>data</con:element></con:representation><con:request name="Request 1" id="ba74e9b1-ba78-4897-8753-6ae9d285d7d2" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Basic cWFmaWxhXzc4NjpuaWNlVmlldw==" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#EndpointAuth}</con:endpoint><con:request/><con:originalUri>http://localhost/oaut/token</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="password" value="password1"/>
+  <con:entry key="grant_type" value="password"/>
+  <con:entry key="scope" value="webclient"/>
+  <con:entry key="username" value="john.carnell"/>
+</con:parameters><con:parameterOrder><con:entry>grant_type</con:entry><con:entry>scope</con:entry><con:entry>username</con:entry><con:entry>password</con:entry></con:parameterOrder></con:request></con:method></con:resource><con:resource name="compliances" path="/compliances/requests" id="064fc519-c110-45a0-9df1-aa6291de9fa0"><con:settings/><con:parameters><con:parameter><con:name>offset</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter><con:parameter><con:name>limit</con:name><con:value/><con:style>QUERY</con:style><con:default/><con:description xsi:nil="true"/></con:parameter></con:parameters><con:method name="Method 1" id="fda7de6e-9aa8-4ef1-9ec2-3f536442d756" method="GET"><con:settings/><con:parameters/><con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>401</con:status><con:params/><con:element xmlns:req="http://localhost/compliances/requests">req:Fault</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:req="http://localhost/compliances/requests">req:Response</con:element></con:representation><con:request name="get compliance request" id="a04e2616-9484-4143-8d4f-6f3726287b54" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer b424d96b-ae56-45f0-a3c6-95b01bd87f16" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>http://localhost:8211</con:endpoint><con:request/><con:originalUri>http://localhost/compliances/requests</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="offset" value="0"/>
+  <con:entry key="limit" value="10"/>
+</con:parameters><con:parameterOrder><con:entry>offset</con:entry><con:entry>limit</con:entry></con:parameterOrder></con:request></con:method><con:method name="update compliance request" id="3e372987-cb60-4324-ba9b-f89bdbdcd2cb" method="PUT"><con:settings/><con:parameters/><con:request name="update compliance request" id="2a8b8222-e9f4-4f57-b0f5-f178ad593653" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer 4b12abd1-94ca-42d2-a68a-f9e35488bee4" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#Endpoint}</con:endpoint><con:request>{
+         "id": 17,
+         "type": "Export Customs Clearance",
+         "status": "0",
+         "dueDate": "2019-01-17T14:00:00.000+0000",
+         "requestDate": "2019-01-08T02:14:08.000+0000",
+         "dateOfCompletion": null,
+         "shipmentNumber": "QAF-18001421",
+         "requestNumber": "CR-190017",
+         "organizationName": "ACME",
+         "organizationId": "1",
+         "compliances": [         {
+            "id": 30,
+            "type": "Export Phytosanitary Inspection",
+            "status": "0",
+            "dueDate": "2019-01-17T14:00:00.000+0000",
+            "requestDate": "2019-01-08T02:14:08.000+0000",
+            "dateOfCompletion": null,
+            "complianceNumber": "CL-190030",
+            "dateStarted": null,
+            "visibleToCustomer": false,
+            "user": null,
+            "issuingAuthority": null
+         },
+		 {
+            
+            "type": "Export Phytosanitary Inspection",
+            "status": "0",
+            "dueDate": "2019-01-17T14:00:00.000+0000",
+            "requestDate": "2019-01-08T02:14:08.000+0000",
+            "visibleToCustomer": false,
+            
+         }],
+         "headOffice": null
+      }</con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:request></con:method></con:resource><con:resource name="requests" path="/compliances/requests" id="e932a922-a4fa-4f8c-9267-3f9a6f8fac55"><con:settings/><con:parameters/><con:method name="create compliance request" id="3f2f71c9-4694-427b-8850-e7a628d47b96" method="POST"><con:settings/><con:parameters/><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:req="http://localhost/compliances/requests">req:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>401</con:status><con:params/><con:element xmlns:req="http://localhost/compliances/requests">req:Fault</con:element></con:representation><con:request name="create request" id="ffdf5610-3829-4656-b947-884c5b5257fc" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer b424d96b-ae56-45f0-a3c6-95b01bd87f16" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#Endpoint}</con:endpoint><con:request>{
+	"status": "",
+	"dueDate": "2019-01-16T19:00:00.000Z",
+	"shipmentNumber": "QAF-18001421",
+	"compliances": [{
+		"type": "Export Declaration Filing",
+		"dueDate": "2019-01-16T19:00:00.000Z",
+		"visibleToCustomer": false
+	}],
+	"type": "Export Customs Clearance",
+	"typeIndex": "Export Customs Clearance",
+	"organizationName": "ACME",
+	"organizationId": "1"
+}</con:request><con:originalUri>http://localhost/compliances/requests</con:originalUri><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:request></con:method></con:resource></con:interface><con:testSuite id="4944e412-53f7-4189-a11e-6dad1db138ab" name="ts_compliance_request_01_successful"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase id="60cad017-759a-4528-a8c3-a8874f342a9b" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="auth-token" searchProperties="true"><con:settings/><con:testStep type="restrequest" name="get-auth-token" id="23ffd257-9c9b-4ae7-88ad-8ac0041cc517"><con:settings/><con:config service="http://localhost:8211" resourcePath="/oauth/token" methodName="Method 1" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="get-auth-token" id="ba74e9b1-ba78-4897-8753-6ae9d285d7d2" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Basic cWFmaWxhXzc4NjpuaWNlVmlldw==" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#EndpointAuth}</con:endpoint><con:request/><con:originalUri>http://localhost/oaut/token</con:originalUri><con:assertion type="Simple Contains" id="7ae34978-2fe7-4aab-8f5c-fa7c337f5db5" name="Contains"><con:configuration><token>access_token</token><ignoreCase>true</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="password" value="password1"/>
+  <con:entry key="grant_type" value="password"/>
+  <con:entry key="scope" value="webclient"/>
+  <con:entry key="username" value="john.carnell"/>
+</con:parameters><con:parameterOrder><con:entry>grant_type</con:entry><con:entry>scope</con:entry><con:entry>username</con:entry><con:entry>password</con:entry></con:parameterOrder></con:restRequest></con:config></con:testStep><con:testStep type="transfer" name="set auth-token" id="fcc54396-145d-478d-834b-08b17893c9b2"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" entitize="false" transferChildNodes="false"><con:name>set auth token value</con:name><con:sourceType>Response</con:sourceType><con:sourceStep>get-auth-token</con:sourceStep><con:sourcePath>access_token</con:sourcePath><con:targetType>auth-token</con:targetType><con:targetStep>#TestSuite#</con:targetStep><con:type>JSONPATH</con:type><con:targetTransferType>JSONPATH</con:targetTransferType><con:upgraded>true</con:upgraded></con:transfers></con:config></con:testStep><con:properties/></con:testCase><con:testCase id="4a7add89-4603-4554-b2ac-75ffa8d6fe97" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="tc_01_add_request" searchProperties="true"><con:settings/><con:testStep type="restrequest" name="add request" id="a3233062-085b-467b-8a7f-648e7a1d7eb5"><con:settings/><con:config service="http://localhost:8211" resourcePath="/compliances/requests" methodName="create compliance request" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="add request" id="ffdf5610-3829-4656-b947-884c5b5257fc" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer ${#TestSuite#auth-token}" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#Endpoint}</con:endpoint><con:request>{
+	"status": "",
+	"dueDate": "2019-01-16T19:00:00.000Z",
+	"shipmentNumber": "QAF-18001421",
+	"compliances": [{
+		"type": "Export Declaration Filing",
+		"dueDate": "2019-01-16T19:00:00.000Z",
+		"visibleToCustomer": false
+	}],
+	"type": "Export Customs Clearance",
+	"typeIndex": "Export Customs Clearance",
+	"organizationName": "ACME",
+	"organizationId": "1"
+}</con:request><con:originalUri>http://localhost/compliances/requests</con:originalUri><con:assertion type="GroovyScriptAssertion" id="55a45a09-8e37-4fb3-9b3a-16ed333b6529" name="Script Assertion"><con:configuration><scriptText>import groovy.json.JsonSlurper;
+def jsonSlurper = new JsonSlurper()
+def object = jsonSlurper.parseText(messageExchange.response.responseContent)
+assert object.requestNumber!=null &amp;&amp; object.requestNumber!=""
+
+</scriptText></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="transfer" name="set request number" id="b126231f-b1a8-4f0e-8a8f-4169bc543539"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" entitize="false" transferChildNodes="false"><con:name>set compliance request number</con:name><con:sourceType>Response</con:sourceType><con:sourceStep>add request</con:sourceStep><con:sourcePath>requestNumber</con:sourcePath><con:targetType>REQUEST_NUMBER</con:targetType><con:targetStep>#TestSuite#</con:targetStep><con:type>JSONPATH</con:type><con:targetTransferType>JSONPATH</con:targetTransferType><con:upgraded>true</con:upgraded></con:transfers></con:config></con:testStep><con:properties/></con:testCase><con:testCase id="28d8d9ae-543b-47b1-b247-f1715bbe564c" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="tc_01_delete_request_successful" searchProperties="true"><con:settings/><con:testStep type="restrequest" name="delete request" id="9fbd789e-fdc7-44c8-993c-3bcfa23baf31"><con:settings/><con:config service="http://localhost:8211" resourcePath="/compliances/requests" methodName="delete compliance request" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="delete request" id="dfedd524-9e9e-4e49-9ce4-ff7a42e8641e" mediaType="application/json" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="Authorization" value="Bearer ${#TestSuite#auth-token}" xmlns="http://eviware.com/soapui/config"/></con:setting></con:settings><con:endpoint>${#Project#Endpoint}</con:endpoint><con:request/><con:originalUri>http://dev.qafi.la/compliance-service-0.0.1/compliances/requests</con:originalUri><con:assertion type="Simple Contains" id="8586c8a4-694a-4dc4-88df-cb5cdb84731f" name="Contains"><con:configuration><token>Deleted Successfully</token><ignoreCase>true</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion" id="1c451ad3-c584-47d4-a479-08210d2c1060" name="Script Assertion"><con:configuration><scriptText>import groovy.json.JsonSlurper;
+def jsonSlurper = new JsonSlurper()
+def object = jsonSlurper.parseText(messageExchange.response.responseContent)
+assert object.responseIdentifier==context.expand('${#TestSuite#REQUEST_NUMBER}')
+
+</scriptText></con:configuration></con:assertion><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="complianceRequestNumber" value="${#TestSuite#REQUEST_NUMBER}" xmlns="http://eviware.com/soapui/config"/></con:parameters><con:parameterOrder><con:entry>complianceRequestNumber</con:entry></con:parameterOrder></con:restRequest></con:config></con:testStep><con:properties/></con:testCase><con:properties><con:property><con:name>auth-token</con:name><con:value>b424d96b-ae56-45f0-a3c6-95b01bd87f16</con:value></con:property><con:property><con:name>REQUEST_NUMBER</con:name><con:value>CR-190022</con:value></con:property></con:properties></con:testSuite><con:properties><con:property><con:name>Endpoint</con:name><con:value>http://localhost:8211</con:value></con:property><con:property><con:name>EndpointAuth</con:name><con:value>http://localhost:8989/auth</con:value></con:property><con:property><con:name>EndpointLocal</con:name><con:value>http://localhost:8211</con:value></con:property></con:properties><con:wssContainer/><con:oAuth2ProfileContainer/><con:oAuth1ProfileContainer/><con:sensitiveInformation/></con:soapui-project>

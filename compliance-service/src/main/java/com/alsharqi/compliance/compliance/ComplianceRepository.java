@@ -36,4 +36,9 @@ public interface ComplianceRepository extends JpaRepository<Compliance,Long> {
     @Modifying
     @Query("Delete  from Compliance c where c.complianceNumber = ?1 ")
     public void deleteComplianceByComplianceNumber(String complianceNumber);
+
+    @Transactional
+    @Modifying
+    @Query("Delete  from Compliance c where c.complianceNumber IN ?1 ")
+    public void deleteAllByComplianceNumbers(List<String> complianceNumbers);
 }

@@ -1254,5 +1254,51 @@ public class ComplianceService {
             return null;
         }
     }
+
+    /*
+     * Q418-1.2 #757
+     * implement delete conpliance functionality
+     * For tets library purpose
+     *
+     * This function first creates a list of compliance numbers under the given compliance request and then deletes the compliances
+     * then it deletes the compliance request
+     * */
+    @Transactional
+    public DefaultResponse deleteComplianceRequestByComplianceRequestNumber(String complianceRequestNumber){
+        try{
+
+            ComplianceRequest complianceRequest = complianceRequestRepository.findComplianceRequestByRequestNumber(complianceRequestNumber);
+
+            if(complianceRequest!=null && complianceRequest.getCompliances().size()>0) {
+                //- create list of complaince numbers and call function to delete them
+                List<String> complainceNumbers = new ArrayList<String>();
+                Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
+                while (complianceIterator.hasNext()) {
+                    complainceNumbers.add(complianceIterator.next().getComplianceNumber());
+                }
+
+                deleteMultipleComplainceByComplianceNumbers(complainceNumbers);
+            }
+
+            complianceRequestRepository.deleteComplianceRequestByRequestNumber(complianceRequestNumber);
+            return new DefaultResponse(complianceRequestNumber,"Deleted Successfully","D001");
+        }catch(Exception e){
+            return new DefaultResponse(complianceRequestNumber,"Could not delete"+e.getMessage(),"D001");
+        }
+    }
+
+
+    /*
+    * Deletes list of compliances by using list of compliance numbers
+    * */
+    @Transactional
+    public DefaultResponse deleteMultipleComplainceByComplianceNumbers(List<String> complainceNumbers){
+        try{
+            complianceRepository.deleteAllByComplianceNumbers(complainceNumbers);
+            return new DefaultResponse(complainceNumbers.get(0),"Deleted Successfully","D001");
+        }catch(Exception e){
+            return new DefaultResponse(complainceNumbers.get(0),"Could not delete"+e.getMessage(),"D001");
+        }
+    }
 }
 
