@@ -42,4 +42,6 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     @Modifying
     @Query("Delete  from ComplianceRequest c where c.requestNumber = ?1 ")
     public void deleteComplianceRequestByRequestNumber(String complianceRequestNumber);
+
+    public Page<ComplianceRequest> findAllByOrderById(Pageable pageable);
 }

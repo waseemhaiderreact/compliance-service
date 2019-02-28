@@ -676,8 +676,24 @@ public class ComplianceService {
 
     public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilter(ComplianceFilter complianceFilter,int offset, int limit){
 
+        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null && complianceFilter.getStatus()!=null){
+
+            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
+                return complianceRequestRepository.findAllByOrderById(new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_progress,new PageRequest(offset,limit));
+            }
+            else
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_complete,new PageRequest(offset,limit));
+        }
+
         if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
             return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
+
         }
 
         if(complianceFilter.getOrganizationName()==null ) {
@@ -718,7 +734,24 @@ public class ComplianceService {
     public Iterable<Compliance> getAllCompliancesWithFilter(ComplianceFilter complianceFilter,int offset, int limit){
 
         if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
-            return complianceRepository.findAllByOrderByIdDesc(new PageRequest(offset,limit));
+
+            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
+                return complianceRepository.findAllByOrderByIdDesc(new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_pending,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_progress,new PageRequest(offset,limit));
+            }
+            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_unassigned,new PageRequest(offset,limit));
+            }
+            else
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_complete,new PageRequest(offset,limit));
+        }
+
+        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
         }
 
         if(complianceFilter.getOrganizationName()==null ) {
