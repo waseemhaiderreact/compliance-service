@@ -663,7 +663,7 @@ public class ComplianceService {
 
 
     public Iterable<ComplianceRequest> getAllComplianceRequests(){
-        return complianceRequestRepository.findAllByOrderById();
+        return complianceRequestRepository.findAll();
     }
 
     public Page<ComplianceRequest> getAllComplianceRequests(int offset, int limit){

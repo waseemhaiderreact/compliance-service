@@ -252,4 +252,14 @@ public class ComplianceController {
         DefaultResponse defaultResponse = complianceService.deleteComplianceRequestByComplianceRequestNumber(complianceRequestNumber);
         return new ResponseEntity(defaultResponse,HttpStatus.OK);
     }
+
+    @GetMapping(value = "/requests/all")
+    public @ResponseBody
+    ResponseEntity<Iterable<ComplianceRequest>> getAllComplianceRequestss() throws EmptyEntityTableException {
+
+            return Optional.ofNullable(complianceService.getAllComplianceRequests())
+                    .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
+
+    }
 }

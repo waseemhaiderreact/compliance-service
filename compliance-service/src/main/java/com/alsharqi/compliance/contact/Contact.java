@@ -18,6 +18,7 @@ public class Contact {
     private String lastName;
     private String email;
     private String phone;
+    private String authority;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
@@ -83,5 +84,11 @@ public class Contact {
         this.issuingAuthorities = issuingAuthorities;
     }
 
+    public String getAuthority() {
+        return authority;
+    }
 
+    public void setAuthority(String authority) {
+        this.authority = authority;
+    }
 }

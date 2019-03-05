@@ -44,4 +44,6 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     public void deleteComplianceRequestByRequestNumber(String complianceRequestNumber);
 
     public Page<ComplianceRequest> findAllByOrderById(Pageable pageable);
+
+
 }
