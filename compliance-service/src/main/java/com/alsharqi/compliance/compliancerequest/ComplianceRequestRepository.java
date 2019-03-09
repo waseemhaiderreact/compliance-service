@@ -20,6 +20,20 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     public Iterable<ComplianceRequest> findAllByShipmentNumber(String shipmentNumber);
 
     public Page<ComplianceRequest> findAllByStatusOrderByIdDesc(String status,Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusOrderByIdAsc(String status,Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByOrderByStatusDesc(Pageable pageable);
+    public Page<ComplianceRequest> findAllByOrderByStatusAsc(Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByStatusOrderByOrganizationNameAsc(String status,Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusOrderByOrganizationNameDesc(String status,Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByStatusOrderByTypeAsc(String status,Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusOrderByTypeDesc(String status,Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByStatusOrderByDueDateAsc(String status,Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusOrderByDueDateDesc(String status,Pageable pageable);
+
     public Page<ComplianceRequest> findAllByStatusAndDueDateBefore(String status, Date date, Pageable page);
 
 
@@ -45,5 +59,20 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
 
     public Page<ComplianceRequest> findAllByOrderById(Pageable pageable);
 
+    //Filter Query w/ Sorting
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIdAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIdDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByOrganizationNameAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByOrganizationNameDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByTypeAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByTypeDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
 
 }
