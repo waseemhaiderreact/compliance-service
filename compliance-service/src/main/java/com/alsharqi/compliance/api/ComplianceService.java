@@ -1262,20 +1262,49 @@ public class ComplianceService {
         }
     }
 
-    public Page<ComplianceRequest> getAllComplianceRequestsPendingBySquad(int offset, int limit,ListOrganization listOrganization){
+    public Page<ComplianceRequest> getAllComplianceRequestsPendingBySquad(String sortBy,String sort,int offset, int limit,ListOrganization listOrganization){
 
         List<String> stringList = new ArrayList<>();
 
-        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();
-
-             organizationIdCLassIterator.hasNext();){
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();organizationIdCLassIterator.hasNext();){
 
             OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
 
             stringList.add(organizationIdCLass.getOrganizationid());
 
         }
-        return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+
+
+        if(sortBy.equalsIgnoreCase("type")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByTypeAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+            else
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByTypeDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        }
+        else if(sortBy.equalsIgnoreCase("customer")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByOrganizationNameAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+            else
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByOrganizationNameDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        }
+        else if(sortBy.equalsIgnoreCase("due-date")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByDueDateAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+            else
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByDueDateDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        }
+        else if(sortBy.equalsIgnoreCase("status")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByStatusAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+            else
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByStatusDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        }
+        else{
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+            else
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        }
     }
 
     public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilterAndSquad(ListOrganization listOrganization,int offset, int limit){
@@ -1546,8 +1575,7 @@ public class ComplianceService {
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateAsc(
                     searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
             else
-                return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
+                return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
         }
         else 
             if(sort.equalsIgnoreCase("asc"))
@@ -1558,5 +1586,72 @@ public class ComplianceService {
                     searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
         
     }
+
+    public Page<ComplianceRequest> getAllComplianceRequestsBySquad(String searchQuery,String sortBy,String sort,int page, int limit,ListOrganization listOrganization){
+
+        List<String> stringList = new ArrayList<>();
+
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();organizationIdCLassIterator.hasNext();){
+
+            OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
+
+            stringList.add(organizationIdCLass.getOrganizationid());
+
+        }
+
+        if(searchQuery.contains(".")) {
+            searchQuery = searchQuery.replace(".", "-");
+            String[] split = searchQuery.split("-");
+            if (split.length == 2) {
+                searchQuery = split[1] + "-" + split[0];
+            }
+            if (split.length == 3) {
+                searchQuery = split[2] + "-" + split[1] + "-" + split[0];
+
+            }
+        }
+
+        if(searchQuery.equalsIgnoreCase("completed"))
+            searchQuery = "2";
+
+        if(searchQuery.equalsIgnoreCase("pending"))
+            searchQuery = "0";
+
+        if(searchQuery.equalsIgnoreCase("in progress"))
+            searchQuery = "1";
+
+
+        if(sortBy.equalsIgnoreCase("type")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+            else
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+        }
+        else if(sortBy.equalsIgnoreCase("customer")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+            else
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+        }
+        else if(sortBy.equalsIgnoreCase("due-date")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+            else
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+        }
+        else if(sortBy.equalsIgnoreCase("status")){
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+            else
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+        }
+        else{
+            if(sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+            else
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+        }
+    }
+
 }
 

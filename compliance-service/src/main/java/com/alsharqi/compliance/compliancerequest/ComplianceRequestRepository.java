@@ -47,6 +47,35 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     public ComplianceRequest findComplianceRequestByRequestNumber(String requestNumber);
 
     public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByIdDesc(String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByIdAsc(String status, java.util.List<String> organizationIds, Pageable pageable);
+
+        public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByOrganizationNameDesc(String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByOrganizationNameAsc(String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByDueDateDesc(String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByDueDateAsc(String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByStatusDesc(String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByStatusAsc(String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByTypeDesc(String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByStatusAndOrganizationIdInOrderByTypeAsc(String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+    public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status, java.util.List<String> organizationIds, Pageable pageable);
+
     public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeAndOrganizationIdInOrderByIdDesc(Date sDate,Date eDate,java.util.List<String> organizationIds,Pageable page);
     public Page<ComplianceRequest> findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(Date sDate,Date eDate,String status,java.util.List<String> organizationIds,Pageable page);
     public Page<ComplianceRequest> findAllByOrganizationNameAndOrganizationIdInOrderByIdDesc(String organizationName,java.util.List<String> organizationIds ,Pageable page);

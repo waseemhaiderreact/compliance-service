@@ -5,6 +5,7 @@ import com.alsharqi.compliance.contact.Contact;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import java.awt.print.Pageable;
 import java.util.Date;
 
 @Entity

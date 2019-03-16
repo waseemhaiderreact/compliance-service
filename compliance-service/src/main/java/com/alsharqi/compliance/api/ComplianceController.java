@@ -210,15 +210,21 @@ public class ComplianceController {
     * Added by SB
     * Created for squad purpose
     * */
-    @RequestMapping(method = RequestMethod.POST,value="", params = {"sort","sortBy","offset","limit"})
+    @RequestMapping(method = RequestMethod.POST,value="", params = {"searchQuery","sort","sortBy","offset","limit"})
     public @ResponseBody
     ResponseEntity getAllCompliancesWithPaginationAndSquads(
+            @RequestParam("searchQuery") String searchQuery,
             @RequestParam("sort") String sort,
             @RequestParam("sortBy") String sortBy,
             @RequestParam("offset") int offset,
             @RequestParam("limit") int limit,@RequestBody ListOrganization listOrganization) throws EmptyEntityTableException {
-        if(offset>=0 && limit>0){
+        if(offset>=0 && limit>0 && searchQuery.isEmpty()){
             return Optional.ofNullable(complianceService.getAllCompliancesPending(sort,sortBy,offset,limit))
+                    .map(resp -> new ResponseEntity<Page<Compliance>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request exists",0L));
+        }
+        else if(offset>=0 && limit>0 && !searchQuery.isEmpty()){
+            return Optional.ofNullable(complianceService.getAllCompliancesByCondition(searchQuery,sort,sortBy,offset,limit))
                     .map(resp -> new ResponseEntity<Page<Compliance>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request exists",0L));
         }
@@ -252,18 +258,26 @@ public class ComplianceController {
     }
 
     //get compliance requests by squads
-    @RequestMapping(method = RequestMethod.POST,value="/requests", params = {"offset","limit"})
+    @RequestMapping(method = RequestMethod.POST,value="/requests", params = {"searchQuery","sort","sortBy","offset","limit"})
     public @ResponseBody
     ResponseEntity getAllComplianceRequestssWithPaginationAndSquad(
+            @RequestParam("searchQuery") String searchQuery,
+            @RequestParam("sortBy") String sortBy,
+            @RequestParam("sort") String sort,
             @RequestParam("offset") int offset,
             @RequestParam("limit") int limit,@RequestBody ListOrganization listOrganization) throws EmptyEntityTableException {
-        if(offset>=0 && limit>0){
-            return Optional.ofNullable(complianceService.getAllComplianceRequestsPendingBySquad(offset,limit,listOrganization))
+        if(offset>=0 && limit>0 && searchQuery.isEmpty()){
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsPendingBySquad(sortBy,sort,offset,limit,listOrganization))
+                    .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+                    .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
+        }
+        else if(offset>=0 && limit>0 && !searchQuery.isEmpty()){
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsBySquad(searchQuery,sortBy,sort,offset,limit,listOrganization))
                     .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
         }
         else {
-            return Optional.ofNullable(complianceService.getAllComplianceRequestsPendingBySquad(0,paginationLimit,listOrganization))
+            return Optional.ofNullable(complianceService.getAllComplianceRequestsPendingBySquad(sortBy,sort,0,paginationLimit,listOrganization))
                     .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
                     .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
         }
