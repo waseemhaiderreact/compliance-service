@@ -29,9 +29,10 @@ public class ComplianceRequest {
     private String requestNumber;
     private String organizationName;
     private String organizationId;
-    @JsonIgnore
-    @Lob
-    private byte[] content;
+
+    private String s3Key;
+
+
 
     @OneToMany(mappedBy="complianceRequest",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private Set<Compliance> compliances=new HashSet<Compliance>();
@@ -103,14 +104,6 @@ public class ComplianceRequest {
         this.requestNumber = requestNumber;
     }
 
-    public byte[] getContent() {
-        return content;
-    }
-
-    public void setContent(byte[] content) {
-        this.content = content;
-    }
-
     public String getOrganizationName() {
         return organizationName;
     }
@@ -141,5 +134,13 @@ public class ComplianceRequest {
 
     public void setHeadOffice(Location headOffice) {
         this.headOffice = headOffice;
+    }
+
+    public String getS3Key() {
+        return s3Key;
+    }
+
+    public void setS3Key(String s3Key) {
+        this.s3Key = s3Key;
     }
 }

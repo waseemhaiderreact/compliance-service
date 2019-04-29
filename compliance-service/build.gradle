@@ -7,8 +7,8 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-		)
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"		
 	}
 }
 
@@ -16,6 +16,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 apply plugin: 'war'
 
 version = '0.0.1-SNAPSHOT'
@@ -25,6 +26,30 @@ targetCompatibility = 1.8
 repositories {
 	mavenCentral()
 }
+
+//Create Jar with the following manifest
+
+jar {
+	enabled=true
+	doFirst {
+		manifest {
+			if (!configurations.compile.isEmpty()) {
+				attributes(
+						'Main-Class': 'com.alsharqi.compliance.ComplianceServiceApplication',
+						'Class-Path': configurations.compile.collect{"lib/$it.name"}.join(' '))
+
+			}
+		}
+	}
+}
+
+//Create lib folder containing dependencies i.e jars
+
+task copyToLib(type: Copy) {
+	into "$buildDir/libs/lib"
+	from configurations.compile
+}
+
 
 war {
 	baseName = 'compliance-service'
@@ -66,12 +91,14 @@ dependencies {
 
 	//liquibase
 	compile('org.liquibase:liquibase-core:3.4.1')
-
+	//Aws
+	compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.133'
 }
 
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Finchley.M2'
+		mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.228'
 	}
 }
 

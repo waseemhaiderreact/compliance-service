@@ -15,12 +15,21 @@ import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.organizationidclass.OrganizationIdCLass;
 import com.alsharqi.compliance.response.DefaultResponse;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.IOUtils;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,8 +38,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -43,6 +55,8 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Service
 public class ComplianceService {
+
+    private static final Logger LOGGER = LogManager.getLogger(ComplianceService.class);
 
     @Autowired
     private ComplianceRequestRepository complianceRequestRepository;
@@ -65,6 +79,43 @@ public class ComplianceService {
     private final String compliance_status_pending="1";
     private final String compliance_status_progress="2";
     private final String compliance_status_complete="3";
+
+    //For S3 Integration
+    @Value("${cloud.aws.credentials.accessKey}")
+    private String accessKey;
+
+    @Value("${cloud.aws.credentials.secretKey}")
+    private String secretKey;
+
+    @Value("${cloud.aws.region}")
+    private String region;
+
+    @Value("${cloud.aws.bucketName}")
+    private String bucketName;
+
+    private AmazonS3 s3Client;
+
+    @PostConstruct
+    private void initializeAmazon() {
+
+        try{
+            BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+            this.s3Client = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                    .withRegion(region)
+                    .build();
+
+            if (!s3Client.doesBucketExist(bucketName)) {
+                s3Client.createBucket(new CreateBucketRequest(bucketName));
+
+                // Verify that the bucket was created by retrieving it and checking its location.
+                String bucketLocation = s3Client.getBucketLocation(new GetBucketLocationRequest(bucketName));
+
+            }
+        }catch(Exception e){
+            LOGGER.error("Amazon initialization / Bucket creation,detection issues ",e);
+        }
+    }
 
     //DFF-1086
     private final String compliance_status_unassigned="0";
@@ -179,15 +230,18 @@ public class ComplianceService {
 
         ComplianceRequest dbComplianceRequest=complianceRequestRepository.findComplianceRequestByRequestNumber(complianceRequest.getRequestNumber());
 
+        String s3Key = dbComplianceRequest.getShipmentNumber()+"/"+complianceRequest.getRequestNumber();
+
         if(dbComplianceRequest!=null) {
-            Set<Compliance> complianceSet = new HashSet<Compliance>() ;
-            complianceRequest.setContent(dbComplianceRequest.getContent());
+
+            Set<Compliance> complianceSet = new HashSet<Compliance>();
+
+
             //--- loop through each compliance so that
             if (complianceRequest.getCompliances() != null && complianceRequest.getCompliances().size() > 0) {
 
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
                 while (complianceIterator.hasNext()) {
-
 
                     Compliance compliance = complianceIterator.next();
                         complianceSet.add(compliance);
@@ -200,8 +254,35 @@ public class ComplianceService {
             if(compliance_request_status_complete.equals(requestStatus) && compliance_status_complete.equals(dbComplianceRequest.getStatus())==false){
                 complianceRequest.setDateOfCompletion(new Date());
                 try {
-                    complianceRequest.setContent(generateDocumentRequestOrder(complianceRequest));
-                } catch (IOException e) {
+
+                    File doc = new File(complianceRequest.getRequestNumber());
+                    try{
+                        FileOutputStream fos = new FileOutputStream(doc);
+                        fos.write(generateDocumentRequestOrder(complianceRequest));
+                        fos.close();
+                        complianceRequest.setS3Key(s3Key);
+                    }catch(Exception e){
+                        LOGGER.error("Building File Content Error",e);
+                    }finally {
+
+                        try {
+
+                            PutObjectRequest putRequest = new PutObjectRequest(bucketName, s3Key,doc);
+                            List<Tag> tags = new ArrayList<Tag>();
+                            tags.add(new Tag("Type", dbComplianceRequest.getType()));
+                            tags.add(new Tag("CustomerId", dbComplianceRequest.getOrganizationId()));
+                            tags.add(new Tag("Source", "Compliance"));
+                            putRequest.setTagging(new ObjectTagging(tags));
+                            s3Client.putObject(putRequest);
+                        } catch (Exception e) {
+                            LOGGER.error("S3 File Save Error", e);
+                        }finally{
+                            //Delete locally created document.
+                            doc.delete();
+                        }
+                    }
+
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -887,7 +968,16 @@ public class ComplianceService {
             ComplianceRequestDocument complianceRequestDocument = new ComplianceRequestDocument();
             //complianceRequestDocument.setContent(generateDocumentRequestOrder(complianceRequest));
             if(complianceRequest!=null){
-                complianceRequestDocument.setContent(complianceRequest.getContent());
+
+                try{
+                    S3ObjectInputStream s3Str = s3Client.getObject(bucketName,complianceRequest.getS3Key()).getObjectContent();
+
+                    complianceRequestDocument.setContent(IOUtils.toByteArray(s3Str));
+                }catch(Exception e){
+                    LOGGER.error("Error Obtaining File Content",e);
+                }/*finally{}*/
+
+
                 return complianceRequestDocument;
             }
             else
