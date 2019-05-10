@@ -136,12 +136,17 @@ public class Compliance {
     }
 
     public void copyComplianceValues(Compliance cp){
+        if(cp.id!=null)
+            this.id = cp.id;
         this.status=cp.status;
         this.dueDate=cp.dueDate;
         this.dateOfCompletion=cp.dateOfCompletion;
         this.user=cp.user;
         this.issuingAuthority=cp.issuingAuthority;
-        this.user.getUser().add(this);
-        this.issuingAuthority.getIssuingAuthorities().add(this);
+        this.type = cp.type;
+        if(this.user!=null)
+            this.user.getUser().add(this);
+        if(this.issuingAuthority!=null)
+            this.issuingAuthority.getIssuingAuthorities().add(this);
     }
 }

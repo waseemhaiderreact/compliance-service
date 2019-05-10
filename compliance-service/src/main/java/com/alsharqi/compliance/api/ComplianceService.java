@@ -188,7 +188,7 @@ public class ComplianceService {
             complianceRequestRepository.save(complianceRequest);
 
             //Send complianceRequest to Search Service-Ammar
-            kafkaAsynService.sendCompliance(complianceRequest);
+            //kafkaAsynService.sendCompliance(complianceRequest);
 
             if(complianceRequest.getCompliances().size()>0) {
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
@@ -244,7 +244,9 @@ public class ComplianceService {
                 while (complianceIterator.hasNext()) {
 
                     Compliance compliance = complianceIterator.next();
-                        complianceSet.add(compliance);
+                    Compliance newCompliance = new Compliance();
+                    newCompliance.copyComplianceValues(compliance);
+                    complianceSet.add(newCompliance);
                 }
                 //complianceRequest.setCompliances(complianceSet);
             }
@@ -1034,6 +1036,17 @@ public class ComplianceService {
 
             if( compliance_status_complete.equals(v1) && compliance_status_complete.equals(v2)==false) {
                 compliance.setDateOfCompletion(new Date());
+
+
+                Notification aNotification = new Notification();
+                aNotification.setMessage("Compliance Completed: "+ compliance.getType());
+                aNotification.setUsername("Qafila");
+                aNotification.setReadStatus(false);
+                aNotification.setType("auto");
+                aNotification.setShipmentNumber(dbCompliance.getComplianceRequest().getShipmentNumber());
+                NotificationModel notification = new NotificationModel("CREATE", aNotification, "carrierBooked");
+                notificationSourceBean.publishNewNotification(notification);
+
             }
             dbCompliance.copyComplianceValues(compliance);
             try {
