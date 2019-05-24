@@ -1860,6 +1860,14 @@ public class ComplianceService {
                 return Constant.CONTENT_TYPE_PDF;
             }
 
+            else if(Constant.EMPTY_STRING.equals(extention) == false) {
+                extention.contains(Constant.FILE_TYPE_JPG);
+                return Constant.CONTENT_TYPE_JPG;
+            }
+            else if(Constant.EMPTY_STRING.equals(extention) == false) {
+                extention.contains(Constant.FILE_TYPE_JPEG);
+                return Constant.CONTENT_TYPE_JPEG;
+            }
         }
 
         {
