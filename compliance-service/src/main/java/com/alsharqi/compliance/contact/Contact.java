@@ -28,6 +28,10 @@ public class Contact {
     @OneToMany(mappedBy = "issuingAuthority",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
     private Set<Compliance> issuingAuthorities = new HashSet<Compliance>();
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "vendor",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private Set<Compliance> vendors = new HashSet<Compliance>();
+
     public Long getId() {
         return id;
     }
@@ -82,6 +86,14 @@ public class Contact {
 
     public void setIssuingAuthorities(Set<Compliance> issuingAuthorities) {
         this.issuingAuthorities = issuingAuthorities;
+    }
+
+    public Set<Compliance> getVendors() {
+        return vendors;
+    }
+
+    public void setVendors(Set<Compliance> vendors) {
+        this.vendors = vendors;
     }
 
     public String getAuthority() {

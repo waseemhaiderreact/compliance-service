@@ -47,6 +47,7 @@ public class DefaultExceptionHandler {
 
     @ExceptionHandler(InvalidDataAccessApiUsageException.class)
     public ResponseEntity<DefaultResponse> idMustNotBeNull(InvalidDataAccessApiUsageException e){
+        e.printStackTrace();
         DefaultResponse response = new DefaultResponse();
         response.setResponseCode("F102");
         response.setDescription(e.getMessage());

@@ -1,12 +1,14 @@
 package com.alsharqi.compliance.compliance;
 
+import com.alsharqi.compliance.attachment.FileAttachments;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.contact.Contact;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
-import java.awt.print.Pageable;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="t_compliance")
@@ -23,12 +25,12 @@ public class Compliance {
     private String complianceNumber;
     private Date dateStarted;
     private boolean visibleToCustomer;
+    private String countryCode;
 
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JoinColumn(name="compliance_request_id")
     private ComplianceRequest complianceRequest;
-
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="user")
@@ -38,6 +40,16 @@ public class Compliance {
     @JoinColumn(name="authority")
     private Contact issuingAuthority;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="vendor")
+    private Contact vendor;
+
+//    @JsonIgnore
+//    @OneToMany(cascade = CascadeType.ALL,mappedBy = "compliance",fetch = FetchType.EAGER)
+//    private Set<Attachment> attachmentSet = new HashSet<Attachment>();
+
+    @OneToMany(mappedBy="compliance",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    private Set<FileAttachments> attachments=new HashSet<FileAttachments>();
 
     public Long getId() {
         return id;
@@ -135,6 +147,30 @@ public class Compliance {
         this.visibleToCustomer = visibleToCustomer;
     }
 
+    public Set<FileAttachments> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(Set<FileAttachments> attachments) {
+        this.attachments = attachments;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    public Contact getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(Contact vendor) {
+        this.vendor = vendor;
+    }
+
     public void copyComplianceValues(Compliance cp){
         if(cp.id!=null)
             this.id = cp.id;
@@ -143,10 +179,14 @@ public class Compliance {
         this.dateOfCompletion=cp.dateOfCompletion;
         this.user=cp.user;
         this.issuingAuthority=cp.issuingAuthority;
+        this.vendor = cp.vendor;
         this.type = cp.type;
         if(this.user!=null)
             this.user.getUser().add(this);
         if(this.issuingAuthority!=null)
             this.issuingAuthority.getIssuingAuthorities().add(this);
+
+        if(this.vendor!=null)
+            this.vendor.getVendors().add(this);
     }
 }

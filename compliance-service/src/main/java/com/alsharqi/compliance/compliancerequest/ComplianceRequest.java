@@ -31,8 +31,7 @@ public class ComplianceRequest {
     private String organizationId;
 
     private String s3Key;
-
-
+    private String countryCode;
 
     @OneToMany(mappedBy="complianceRequest",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private Set<Compliance> compliances=new HashSet<Compliance>();
@@ -142,5 +141,13 @@ public class ComplianceRequest {
 
     public void setS3Key(String s3Key) {
         this.s3Key = s3Key;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
     }
 }

@@ -1,5 +1,7 @@
 package com.alsharqi.compliance.api;
 
+import com.alsharqi.compliance.attachment.Attachment;
+import com.alsharqi.compliance.attachment.FileAttachments;
 import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.compliance.ComplianceRepository;
 import com.alsharqi.compliance.compliancerequest.ComplianceFilter;
@@ -14,7 +16,10 @@ import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.organizationidclass.OrganizationIdCLass;
+import com.alsharqi.compliance.request.EditComplianceRecordRequest;
+import com.alsharqi.compliance.response.ComplianceFileUploadResponse;
 import com.alsharqi.compliance.response.DefaultResponse;
+import com.alsharqi.compliance.util.Constant;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -34,9 +39,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.method.P;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -44,6 +51,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -73,12 +81,12 @@ public class ComplianceService {
     @Autowired
     KafkaAsynService kafkaAsynService;
 
-    private final String compliance_request_status_pending="0";
-    private final String compliance_request_status_progress="1";
-    private final String compliance_request_status_complete="2";
-    private final String compliance_status_pending="1";
-    private final String compliance_status_progress="2";
-    private final String compliance_status_complete="3";
+    private final String compliance_request_status_pending = "0";
+    private final String compliance_request_status_progress = "1";
+    private final String compliance_request_status_complete = "2";
+    private final String compliance_status_pending = "1";
+    private final String compliance_status_progress = "2";
+    private final String compliance_status_complete = "3";
 
     //For S3 Integration
     @Value("${cloud.aws.credentials.accessKey}")
@@ -93,12 +101,18 @@ public class ComplianceService {
     @Value("${cloud.aws.bucketName}")
     private String bucketName;
 
+    @Value("${cloud.aws.custom.upload.file.url}")
+    private String s3EnpointCustomUploadedFileUrl;
+
+    @Value("${clound.aws.s3.compliance.folder}")
+    private String complianceFolderName;
+
     private AmazonS3 s3Client;
 
     @PostConstruct
     private void initializeAmazon() {
 
-        try{
+        try {
             BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
             this.s3Client = AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(credentials))
@@ -112,13 +126,13 @@ public class ComplianceService {
                 String bucketLocation = s3Client.getBucketLocation(new GetBucketLocationRequest(bucketName));
 
             }
-        }catch(Exception e){
-            LOGGER.error("Amazon initialization / Bucket creation,detection issues ",e);
+        } catch (Exception e) {
+            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
         }
     }
 
     //DFF-1086
-    private final String compliance_status_unassigned="0";
+    private final String compliance_status_unassigned = "0";
     /*Font section*/
     Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 16,
             Font.BOLD);
@@ -133,36 +147,36 @@ public class ComplianceService {
 
 
     Font mini = new Font(Font.FontFamily.HELVETICA, 4);
-    Font miniBold = new Font(Font.FontFamily.HELVETICA, 4,Font.BOLD);
-    Font miniGray = new Font(Font.FontFamily.HELVETICA, 4,Font.NORMAL,BaseColor.GRAY);
+    Font miniBold = new Font(Font.FontFamily.HELVETICA, 4, Font.BOLD);
+    Font miniGray = new Font(Font.FontFamily.HELVETICA, 4, Font.NORMAL, BaseColor.GRAY);
     Font small = new Font(Font.FontFamily.HELVETICA, 6);
-    Font smallBold = new Font(Font.FontFamily.HELVETICA, 6,Font.BOLD);
-    Font smallGray = new Font(Font.FontFamily.HELVETICA, 6,Font.NORMAL,BaseColor.GRAY);
+    Font smallBold = new Font(Font.FontFamily.HELVETICA, 6, Font.BOLD);
+    Font smallGray = new Font(Font.FontFamily.HELVETICA, 6, Font.NORMAL, BaseColor.GRAY);
     //smallGray.setColor(BaseColor.GRAY);
-    Font smallBoldGray = new Font(Font.FontFamily.HELVETICA, 6,Font.BOLD,BaseColor.GRAY);
+    Font smallBoldGray = new Font(Font.FontFamily.HELVETICA, 6, Font.BOLD, BaseColor.GRAY);
     //smallBoldGray.setColor(BaseColor.GRAY);
     Font normal = new Font(Font.FontFamily.HELVETICA, 8);
-    Font normalBold = new Font(Font.FontFamily.HELVETICA, 8,Font.BOLD);
+    Font normalBold = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD);
     Font normalGray = new Font(Font.FontFamily.HELVETICA, 8);
     //normalGray.setColor(BaseColor.GRAY);
-    Font normalBoldGray = new Font(Font.FontFamily.HELVETICA, 8,Font.BOLD,BaseColor.GRAY);
+    Font normalBoldGray = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD, BaseColor.GRAY);
     //normalBoldGray.setColor(BaseColor.GRAY);
     Font large = new Font(Font.FontFamily.HELVETICA, 8);
-    Font largeBold = new Font(Font.FontFamily.HELVETICA, 8,Font.BOLD);
-    Font largeBoldBlue = new Font(Font.FontFamily.HELVETICA, 8,Font.BOLD,new BaseColor(36,106,180));
+    Font largeBold = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD);
+    Font largeBoldBlue = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD, new BaseColor(36, 106, 180));
     Font heading1 = new Font(Font.FontFamily.HELVETICA, 12);
-    Font heading1Bold = new Font(Font.FontFamily.HELVETICA, 12,Font.BOLD,new BaseColor(106,206,242));
-    Font heading1BoldBlue = new Font(Font.FontFamily.HELVETICA, 12,Font.BOLD,new BaseColor(36,106,180));
-    BaseColor lightGray = new BaseColor(211,211,211);
-    BaseColor lightBlue= new BaseColor(106,206,242);
+    Font heading1Bold = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, new BaseColor(106, 206, 242));
+    Font heading1BoldBlue = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, new BaseColor(36, 106, 180));
+    BaseColor lightGray = new BaseColor(211, 211, 211);
+    BaseColor lightBlue = new BaseColor(106, 206, 242);
 
     @Transactional
-    public ComplianceRequest addRequest(ComplianceRequest complianceRequest){
+    public ComplianceRequest addRequest(ComplianceRequest complianceRequest) {
 
         //--- loop through each compliance so that
-        if(complianceRequest.getCompliances()!=null && complianceRequest.getCompliances().size()>0){
+        if (complianceRequest.getCompliances() != null && complianceRequest.getCompliances().size() > 0) {
             Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
-            while(complianceIterator.hasNext()){
+            while (complianceIterator.hasNext()) {
                 Compliance compliance = complianceIterator.next();
                 compliance.setStatus(compliance_status_unassigned);
                 compliance.setComplianceRequest(complianceRequest);
@@ -177,9 +191,9 @@ public class ComplianceService {
             complianceRequest.setRequestNumber(getComplianceRequestNumber(complianceRequest.getId()));
 
             //loop through compliane to set the compliance number
-            if(complianceRequest.getCompliances()!=null && complianceRequest.getCompliances().size()>0){
+            if (complianceRequest.getCompliances() != null && complianceRequest.getCompliances().size() > 0) {
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
-                while(complianceIterator.hasNext()){
+                while (complianceIterator.hasNext()) {
                     Compliance compliance = complianceIterator.next();
                     compliance.setComplianceNumber(getComplianceNumber(compliance.getId()));
                 }
@@ -190,12 +204,12 @@ public class ComplianceService {
             //Send complianceRequest to Search Service-Ammar
             //kafkaAsynService.sendCompliance(complianceRequest);
 
-            if(complianceRequest.getCompliances().size()>0) {
+            if (complianceRequest.getCompliances().size() > 0) {
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
-                while(complianceIterator.hasNext()){
+                while (complianceIterator.hasNext()) {
                     Compliance currentCompliance = complianceIterator.next();
                     Notification aNotification = new Notification();
-                    aNotification.setMessage("Compliance Created: "+ currentCompliance.getType());
+                    aNotification.setMessage("Compliance Created: " + currentCompliance.getType());
                     aNotification.setUsername("Qafila");
                     aNotification.setReadStatus(false);
                     aNotification.setType("auto");
@@ -204,8 +218,7 @@ public class ComplianceService {
                     notificationSourceBean.publishNewNotification(notification);
                 }
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         //*******  Create Notification to send to the User about carrier booking  **********
@@ -213,26 +226,26 @@ public class ComplianceService {
         return complianceRequest;
     }
 
-    String getComplianceRequestNumber(Long number){
+    String getComplianceRequestNumber(Long number) {
         DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
         String formattedDate = df.format(Calendar.getInstance().getTime());
-        return "CR-"+formattedDate+String.format("%04d", number) ;
+        return "CR-" + formattedDate + String.format("%04d", number);
     }
 
-    String getComplianceNumber(Long number){
+    String getComplianceNumber(Long number) {
         DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
         String formattedDate = df.format(Calendar.getInstance().getTime());
-        return "CL-"+formattedDate+String.format("%04d", number) ;
+        return "CL-" + formattedDate + String.format("%04d", number);
     }
 
     @Transactional
-    public ComplianceRequest updateRequest(ComplianceRequest complianceRequest){
+    public ComplianceRequest updateRequest(ComplianceRequest complianceRequest) {
 
-        ComplianceRequest dbComplianceRequest=complianceRequestRepository.findComplianceRequestByRequestNumber(complianceRequest.getRequestNumber());
+        ComplianceRequest dbComplianceRequest = complianceRequestRepository.findComplianceRequestByRequestNumber(complianceRequest.getRequestNumber());
 
-        String s3Key = dbComplianceRequest.getShipmentNumber()+"/"+complianceRequest.getRequestNumber();
+        String s3Key = dbComplianceRequest.getShipmentNumber() + "/" + complianceRequest.getRequestNumber();
 
-        if(dbComplianceRequest!=null) {
+        if (dbComplianceRequest != null) {
 
             Set<Compliance> complianceSet = new HashSet<Compliance>();
 
@@ -253,23 +266,23 @@ public class ComplianceService {
 
             //-- check for status if complete, add date of completion
             String requestStatus = complianceRequest.getStatus();
-            if(compliance_request_status_complete.equals(requestStatus) && compliance_status_complete.equals(dbComplianceRequest.getStatus())==false){
+            if (compliance_request_status_complete.equals(requestStatus) && compliance_status_complete.equals(dbComplianceRequest.getStatus()) == false) {
                 complianceRequest.setDateOfCompletion(new Date());
                 try {
 
                     File doc = new File(complianceRequest.getRequestNumber());
-                    try{
+                    try {
                         FileOutputStream fos = new FileOutputStream(doc);
                         fos.write(generateDocumentRequestOrder(complianceRequest));
                         fos.close();
                         complianceRequest.setS3Key(s3Key);
-                    }catch(Exception e){
-                        LOGGER.error("Building File Content Error",e);
-                    }finally {
+                    } catch (Exception e) {
+                        LOGGER.error("Building File Content Error", e);
+                    } finally {
 
                         try {
 
-                            PutObjectRequest putRequest = new PutObjectRequest(bucketName, s3Key,doc);
+                            PutObjectRequest putRequest = new PutObjectRequest(bucketName, s3Key, doc);
                             List<Tag> tags = new ArrayList<Tag>();
                             tags.add(new Tag("Type", dbComplianceRequest.getType()));
                             tags.add(new Tag("CustomerId", dbComplianceRequest.getOrganizationId()));
@@ -278,7 +291,7 @@ public class ComplianceService {
                             s3Client.putObject(putRequest);
                         } catch (Exception e) {
                             LOGGER.error("S3 File Save Error", e);
-                        }finally{
+                        } finally {
                             //Delete locally created document.
                             doc.delete();
                         }
@@ -292,11 +305,11 @@ public class ComplianceService {
 
             try {
 
-                if(complianceSet.size()>0){
+                if (complianceSet.size() > 0) {
                     complianceSet = addComplianceSet(complianceSet);
                     Iterator<Compliance> iterator = complianceSet.iterator();
-                    while(iterator.hasNext())
-                    iterator.next().setComplianceRequest(complianceRequest);
+                    while (iterator.hasNext())
+                        iterator.next().setComplianceRequest(complianceRequest);
                 }
 
                 complianceRequest.setCompliances(complianceSet);
@@ -308,17 +321,16 @@ public class ComplianceService {
                 complianceRequest.setId(null);
                 e.printStackTrace();
             }
-        }
-        else {
+        } else {
             complianceRequest.setId(null);
         }
 
         return (complianceRequest);
     }
 
-    byte[] generateDocumentRequestOrder(ComplianceRequest complianceRequest)  throws IOException {
+    byte[] generateDocumentRequestOrder(ComplianceRequest complianceRequest) throws IOException {
         Document document = new Document(PageSize.A4);
-        document.setMargins(46.0F,36.0F,-6F,36.0F);
+        document.setMargins(46.0F, 36.0F, -6F, 36.0F);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try {
@@ -333,20 +345,18 @@ public class ComplianceService {
             Paragraph extraLines = new Paragraph();
 
 
-
             document.add(getdDocumentHeader());
 
             // add watermark
 
-            document.add(getDocumentSectionCompanyDetails(complianceRequest.getShipmentNumber(),complianceRequest.getOrganizationName(),complianceRequest.getHeadOffice()));
+            document.add(getDocumentSectionCompanyDetails(complianceRequest.getShipmentNumber(), complianceRequest.getOrganizationName(), complianceRequest.getHeadOffice()));
             document.add(addEmptyLineWithBorder(2));
             document.add(getDocumentSectionCompliancesHeading(complianceRequest));
             document.add(addEmptyLineWithBorder(2));
             document.add(getCompliancesData(complianceRequest));
 
             document.close();
-        }
-        catch(DocumentException ex){
+        } catch (DocumentException ex) {
             ex.printStackTrace();
         }
 
@@ -392,25 +402,25 @@ public class ComplianceService {
         return headerTable;
     }
 
-    PdfPTable getDocumentSectionCompanyDetails(String shipmentNumber,String organizationName,Location headOffice){
+    PdfPTable getDocumentSectionCompanyDetails(String shipmentNumber, String organizationName, Location headOffice) {
 
         PdfPTable table = new PdfPTable(2);
         table.getDefaultCell().setBorder(0);
         table.setWidthPercentage(100);
         try {
-            table.setWidths(new float[] { 2, 1 });
+            table.setWidths(new float[]{2, 1});
         } catch (DocumentException e) {
             e.printStackTrace();
         }
 
-        Paragraph first = new Paragraph(organizationName,normalBold);
+        Paragraph first = new Paragraph(organizationName, normalBold);
         Paragraph second;// = new Paragraph("Shipment Number: QAF-18001015",normal);
         PdfPCell leftCell = new PdfPCell(first);
 
-        Chunk chunk = new Chunk("Shipment Number: ",normalBoldGray);
+        Chunk chunk = new Chunk("Shipment Number: ", normalBoldGray);
         second = new Paragraph();
         second.add(chunk);
-        chunk = new Chunk(shipmentNumber,normal);
+        chunk = new Chunk(shipmentNumber, normal);
         second.add(chunk);
         PdfPCell rightCell = new PdfPCell(second);
         leftCell.setPaddingLeft(10);
@@ -428,7 +438,7 @@ public class ComplianceService {
         table.addCell(leftCell);
         table.addCell(rightCell);
 
-        chunk = new Chunk("Address:",normalBoldGray);
+        chunk = new Chunk("Address:", normalBoldGray);
         first = new Paragraph();
         first.add(chunk);
 
@@ -436,12 +446,12 @@ public class ComplianceService {
         leftCell.setPaddingLeft(10);
 
 
-        chunk = new Chunk("Issue Date: ",normalBoldGray);
+        chunk = new Chunk("Issue Date: ", normalBoldGray);
         second = new Paragraph();
         second.add(chunk);
         //TODO: to be revied as what date is needed to be added
         String formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
-        chunk = new Chunk(formattedDate,normal);
+        chunk = new Chunk(formattedDate, normal);
         second.add(chunk);
         rightCell = new PdfPCell(second);
         leftCell.setBorder(0);
@@ -461,12 +471,13 @@ public class ComplianceService {
         table.addCell(rightCell);
         float height = leftCell.getHeight();
 
-        chunk = new Chunk(headOffice.getAddress1()+", "+headOffice.getCity()+",",normal);
+        chunk = new Chunk(headOffice.getAddress1() + ", " + headOffice.getCity() + ",", normal);
         first = new Paragraph();
         first.add(chunk);
-        second = new Paragraph(" ",mini);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
-        leftCell.setPaddingTop(10);;
+        leftCell.setPaddingTop(10);
+        ;
 
         //leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
@@ -475,7 +486,8 @@ public class ComplianceService {
         leftCell.setBorder(0);
         //set border left color
         leftCell.setPaddingLeft(10);
-        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingTop(0);
+        ;
         leftCell.setPaddingBottom(0L);
         leftCell.setBorderWidthLeft(1);
         leftCell.setBorderColorLeft(lightBlue);
@@ -490,15 +502,16 @@ public class ComplianceService {
         table.addCell(rightCell);
 
 
-        first = new Paragraph(headOffice.getCountry(),normal);
-        second = new Paragraph(" ",mini);
+        first = new Paragraph(headOffice.getCountry(), normal);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
         //leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
         rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         leftCell.setBorder(0);
         leftCell.setPaddingLeft(10);
-        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingTop(0);
+        ;
         leftCell.setPaddingBottom(0L);
         leftCell.setBorderWidthLeft(1);
         leftCell.setBorderColorLeft(lightBlue);
@@ -514,15 +527,15 @@ public class ComplianceService {
         table.addCell(leftCell);
         table.addCell(rightCell);
 
-        chunk = new Chunk("Phone: ",normalBoldGray);
+        chunk = new Chunk("Phone: ", normalBoldGray);
         first = new Paragraph();
         first.add(chunk);
 
         Contact headOfficeContact = headOffice.getContacts().iterator().next();
 
-        chunk = new Chunk(headOfficeContact.getPhone(),normal);
+        chunk = new Chunk(headOfficeContact.getPhone(), normal);
         first.add(chunk);
-        second = new Paragraph(" ",mini);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
         //leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
@@ -532,7 +545,8 @@ public class ComplianceService {
         leftCell.setUseVariableBorders(true);
         leftCell.setBorderWidthLeft(1);
         leftCell.setBorderColorLeft(lightBlue);
-        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingTop(0);
+        ;
         leftCell.setPaddingBottom(0L);
         leftCell.setPaddingLeft(10);
         rightCell.setBorder(0);
@@ -547,13 +561,13 @@ public class ComplianceService {
 
 
         /*Email*/
-        chunk = new Chunk("Email: ",normalBoldGray);
+        chunk = new Chunk("Email: ", normalBoldGray);
         first = new Paragraph();
         first.add(chunk);
-        chunk = new Chunk(headOfficeContact.getEmail(),normal);
+        chunk = new Chunk(headOfficeContact.getEmail(), normal);
 
         first.add(chunk);
-        second = new Paragraph(" ",mini);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
         leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
@@ -574,7 +588,7 @@ public class ComplianceService {
         return table;
     }
 
-    PdfPTable getDocumentSectionCompliancesHeading(ComplianceRequest complianceRequest){
+    PdfPTable getDocumentSectionCompliancesHeading(ComplianceRequest complianceRequest) {
         PdfPTable table = new PdfPTable(3);
         table.getDefaultCell().setBorder(0);
         //table.getDefaultCell().setBackgroundColor(lightGray);
@@ -612,24 +626,21 @@ public class ComplianceService {
         table.addCell(thirdCell);
 
 
-
-
-
         return table;
     }
 
-    PdfPTable getCompliancesData(ComplianceRequest complianceRequest){
+    PdfPTable getCompliancesData(ComplianceRequest complianceRequest) {
 
         PdfPTable table = new PdfPTable(7);
         //table.getDefaultCell().setBorder(0);
         table.setWidthPercentage(100);
         Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
-        while(complianceIterator.hasNext()) {
+        while (complianceIterator.hasNext()) {
             Compliance compliance = complianceIterator.next();
             PdfPCell firstCell;
             PdfPCell secondCell = new PdfPCell(new Paragraph());
             PdfPCell thirdCell = new PdfPCell(new Paragraph());
-            PdfPCell  fourthCell = new PdfPCell(new Paragraph());
+            PdfPCell fourthCell = new PdfPCell(new Paragraph());
             PdfPCell fifthCell = new PdfPCell(new Paragraph());
             PdfPCell sixthCell = new PdfPCell(new Paragraph());
             PdfPCell seventhCell = new PdfPCell(new Paragraph());
@@ -661,9 +672,9 @@ public class ComplianceService {
             fourth = new Paragraph();
             chunk = new Chunk("Request Date:  \n\t", normalBoldGray);
             third.add(chunk);
-            SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
-            if(compliance.getRequestDate()!=null)
-            chunk = new Chunk(String.valueOf(sdf.format(compliance.getRequestDate())), normal);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            if (compliance.getRequestDate() != null)
+                chunk = new Chunk(String.valueOf(sdf.format(compliance.getRequestDate())), normal);
             else
                 chunk = new Chunk("N/A", normal);
             third.add(chunk);
@@ -672,12 +683,11 @@ public class ComplianceService {
 
             chunk = new Chunk("Start Date:  \n\t", normalBoldGray);
             fourth.add(chunk);
-            if(compliance.getDateStarted()!=null){
-                sdf=new SimpleDateFormat("dd/MM/yyyy");
-            chunk = new Chunk(String.valueOf(sdf.format(compliance.getDateStarted())), normal);
+            if (compliance.getDateStarted() != null) {
+                sdf = new SimpleDateFormat("dd/MM/yyyy");
+                chunk = new Chunk(String.valueOf(sdf.format(compliance.getDateStarted())), normal);
                 fourth.add(chunk);
-            }
-            else{
+            } else {
                 chunk = new Chunk("N/A", normal);
                 fourth.add(chunk);
             }
@@ -699,12 +709,11 @@ public class ComplianceService {
 
             chunk = new Chunk("Due Date:  \n\t", normalBoldGray);
             sixth.add(chunk);
-            sdf=new SimpleDateFormat("dd/MM/yyyy");
-            if(compliance.getDueDate()!=null){
+            sdf = new SimpleDateFormat("dd/MM/yyyy");
+            if (compliance.getDueDate() != null) {
                 chunk = new Chunk(String.valueOf(sdf.format(compliance.getDueDate())), normal);
                 sixth.add(chunk);
-            }
-            else{
+            } else {
                 chunk = new Chunk("N/A", normal);
                 sixth.add(chunk);
             }
@@ -715,12 +724,11 @@ public class ComplianceService {
 
             chunk = new Chunk("Completion Date:  \n\t", normalBoldGray);
             seventh.add(chunk);
-            sdf=new SimpleDateFormat("dd/MM/yyyy");
-            if(compliance.getDateOfCompletion()!=null){
+            sdf = new SimpleDateFormat("dd/MM/yyyy");
+            if (compliance.getDateOfCompletion() != null) {
                 chunk = new Chunk(String.valueOf(sdf.format(compliance.getDateOfCompletion())), normal);
                 seventh.add(chunk);
-            }
-            else{
+            } else {
                 chunk = new Chunk("N/A", normal);
                 seventh.add(chunk);
             }
@@ -751,239 +759,205 @@ public class ComplianceService {
     }
 
 
-    public Iterable<ComplianceRequest> getAllComplianceRequests(){
+    public Iterable<ComplianceRequest> getAllComplianceRequests() {
         return complianceRequestRepository.findAll();
     }
 
-    public Page<ComplianceRequest> getAllComplianceRequests(int offset, int limit){
-        return complianceRequestRepository.findAll(new PageRequest(offset,limit));
+    public Page<ComplianceRequest> getAllComplianceRequests(int offset, int limit) {
+        return complianceRequestRepository.findAll(new PageRequest(offset, limit));
     }
 
-    public Page<ComplianceRequest> getAllComplianceRequestsPending(int offset, int limit,String sort,String orderBy){
-        if(orderBy.equalsIgnoreCase("customer")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusOrderByOrganizationNameAsc(compliance_request_status_pending,new PageRequest(offset,limit));
+    public Page<ComplianceRequest> getAllComplianceRequestsPending(int offset, int limit, String sort, String orderBy) {
+        if (orderBy.equalsIgnoreCase("customer")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusOrderByOrganizationNameAsc(compliance_request_status_pending, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusOrderByOrganizationNameDesc(compliance_request_status_pending,new PageRequest(offset,limit));
-        }
-        else if(orderBy.equalsIgnoreCase("status")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByOrderByStatusAsc(new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusOrderByOrganizationNameDesc(compliance_request_status_pending, new PageRequest(offset, limit));
+        } else if (orderBy.equalsIgnoreCase("status")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByOrderByStatusAsc(new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByOrderByStatusDesc(new PageRequest(offset,limit));
-        }
-        else if(orderBy.equalsIgnoreCase("type")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusOrderByTypeAsc(compliance_request_status_pending,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByOrderByStatusDesc(new PageRequest(offset, limit));
+        } else if (orderBy.equalsIgnoreCase("type")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusOrderByTypeAsc(compliance_request_status_pending, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusOrderByTypeDesc(compliance_request_status_pending,new PageRequest(offset,limit));
-        }
-        else if(orderBy.equalsIgnoreCase("due-date")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusOrderByDueDateAsc(compliance_request_status_pending,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusOrderByTypeDesc(compliance_request_status_pending, new PageRequest(offset, limit));
+        } else if (orderBy.equalsIgnoreCase("due-date")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusOrderByDueDateAsc(compliance_request_status_pending, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusOrderByDueDateDesc(compliance_request_status_pending,new PageRequest(offset,limit));
-        }
-        else{
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusOrderByIdAsc(compliance_request_status_pending,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusOrderByDueDateDesc(compliance_request_status_pending, new PageRequest(offset, limit));
+        } else {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusOrderByIdAsc(compliance_request_status_pending, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending, new PageRequest(offset, limit));
         }
     }
 
-    public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilter(ComplianceFilter complianceFilter,int offset, int limit){
+    public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilter(ComplianceFilter complianceFilter, int offset, int limit) {
 
-        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null && complianceFilter.getStatus()!=null){
+        if (complianceFilter.getOrganizationName() == null && complianceFilter.getEndDate() == null && complianceFilter.getStartDate() == null && complianceFilter.getStatus() != null) {
 
-            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
-                return complianceRequestRepository.findAllByOrderById(new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_progress,new PageRequest(offset,limit));
-            }
-            else
-                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_complete,new PageRequest(offset,limit));
-        }
-
-        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
-            return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending,new PageRequest(offset,limit));
-
-        }
-
-        if(complianceFilter.getOrganizationName()==null ) {
-            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
-                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"0",new PageRequest(offset,limit));
-            }
-            else
-                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"1",new PageRequest(offset,limit));
-        }
-        else{
             if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(),new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByOrderById(new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_progress, new PageRequest(offset, limit));
+            } else
+                return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_complete, new PageRequest(offset, limit));
+        }
+
+        if (complianceFilter.getOrganizationName() == null && complianceFilter.getEndDate() == null && complianceFilter.getStartDate() == null) {
+            return complianceRequestRepository.findAllByStatusOrderByIdDesc(compliance_request_status_pending, new PageRequest(offset, limit));
+
+        }
+
+        if (complianceFilter.getOrganizationName() == null) {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), "0", new PageRequest(offset, limit));
+            } else
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), "1", new PageRequest(offset, limit));
+        } else {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(), new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),"0",new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), "0", new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_progress,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_request_status_progress, new PageRequest(offset, limit));
                 return x;
-            }
-            else{
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_complete,new PageRequest(offset,limit));
+            } else {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_request_status_complete, new PageRequest(offset, limit));
                 return x;
             }
 
         }
     }
 
-    public Iterable<ComplianceRequest> getAllComplianceRequestsByShipmentNumber(String shipmentNumber){
+    public Iterable<ComplianceRequest> getAllComplianceRequestsByShipmentNumber(String shipmentNumber) {
         return complianceRequestRepository.findAllByShipmentNumber(shipmentNumber);
     }
 
-    public Iterable<Compliance> getAllCompliancesWithFilter(ComplianceFilter complianceFilter,int offset, int limit){
+    public Iterable<Compliance> getAllCompliancesWithFilter(ComplianceFilter complianceFilter, int offset, int limit) {
 
-        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
+        if (complianceFilter.getOrganizationName() == null && complianceFilter.getEndDate() == null && complianceFilter.getStartDate() == null) {
 
-            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
-                return complianceRepository.findAllByOrderByIdDesc(new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_pending,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_progress,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
-                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_unassigned,new PageRequest(offset,limit));
-            }
-            else
-                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_complete,new PageRequest(offset,limit));
-        }
-
-        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
-        }
-
-        if(complianceFilter.getOrganizationName()==null ) {
-            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_pending,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_progress,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_unassigned,new PageRequest(offset,limit));
-            }
-            else
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_complete,new PageRequest(offset,limit));
-        }
-        else{
             if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(),new PageRequest(offset,limit));
+                return complianceRepository.findAllByOrderByIdDesc(new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_pending, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_progress, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("unassigned")) {
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_unassigned, new PageRequest(offset, limit));
+            } else
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_complete, new PageRequest(offset, limit));
+        }
+
+        if (complianceFilter.getOrganizationName() == null && complianceFilter.getEndDate() == null && complianceFilter.getStartDate() == null) {
+        }
+
+        if (complianceFilter.getOrganizationName() == null) {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_pending, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_progress, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("unassigned")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_unassigned, new PageRequest(offset, limit));
+            } else
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_complete, new PageRequest(offset, limit));
+        } else {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(), new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_pending,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_pending, new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_progress,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_progress, new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_unassigned,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("unassigned")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_unassigned, new PageRequest(offset, limit));
                 return x;
-            }
-            else{
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_complete,new PageRequest(offset,limit));
+            } else {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_complete, new PageRequest(offset, limit));
                 return x;
             }
 
         }
     }
 
-    public Page<Compliance> getAllCompliances(int offset, int limit){
-        return complianceRepository.findAll(new PageRequest(offset,limit));
+    public Page<Compliance> getAllCompliances(int offset, int limit) {
+        return complianceRepository.findAll(new PageRequest(offset, limit));
     }
 
-    public Page<Compliance> getAllCompliancesPending(String sort,String sortBy,int offset, int limit){
+    public Page<Compliance> getAllCompliancesPending(String sort, String sortBy, int offset, int limit) {
 
-        if(sortBy.equalsIgnoreCase("type")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByStatusOrderByTypeAsc(compliance_status_unassigned ,new PageRequest(offset,limit));
+        if (sortBy.equalsIgnoreCase("type")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByStatusOrderByTypeAsc(compliance_status_unassigned, new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByStatusOrderByTypeDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("user")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByStatusOrderByUserFirstNameAsc(compliance_status_unassigned ,new PageRequest(offset,limit));
+                return complianceRepository.findAllByStatusOrderByTypeDesc(compliance_status_unassigned, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("user")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByStatusOrderByUserFirstNameAsc(compliance_status_unassigned, new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByStatusOrderByUserFirstNameDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("customer")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByStatusOrderByComplianceRequestOrganizationNameAsc(compliance_status_unassigned ,new PageRequest(offset,limit));
+                return complianceRepository.findAllByStatusOrderByUserFirstNameDesc(compliance_status_unassigned, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("customer")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByStatusOrderByComplianceRequestOrganizationNameAsc(compliance_status_unassigned, new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByStatusOrderByComplianceRequestOrganizationNameDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("issuing-authority")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByStatusOrderByIssuingAuthorityAuthorityAsc(compliance_status_unassigned ,new PageRequest(offset,limit));
+                return complianceRepository.findAllByStatusOrderByComplianceRequestOrganizationNameDesc(compliance_status_unassigned, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("issuing-authority")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByStatusOrderByIssuingAuthorityAuthorityAsc(compliance_status_unassigned, new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByStatusOrderByIssuingAuthorityAuthorityDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("due-date")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByStatusOrderByDueDateAsc(compliance_status_unassigned ,new PageRequest(offset,limit));
+                return complianceRepository.findAllByStatusOrderByIssuingAuthorityAuthorityDesc(compliance_status_unassigned, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("due-date")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByStatusOrderByDueDateAsc(compliance_status_unassigned, new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByStatusOrderByDueDateDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("status")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByOrderByStatusAsc(new PageRequest(offset,limit));
+                return complianceRepository.findAllByStatusOrderByDueDateDesc(compliance_status_unassigned, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("status")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByOrderByStatusAsc(new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByOrderByStatusDesc(new PageRequest(offset,limit));
-        }
-        else{
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByStatusOrderByIdAsc(compliance_status_unassigned ,new PageRequest(offset,limit));
+                return complianceRepository.findAllByOrderByStatusDesc(new PageRequest(offset, limit));
+        } else {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRepository.findAllByStatusOrderByIdAsc(compliance_status_unassigned, new PageRequest(offset, limit));
             else
-                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_unassigned ,new PageRequest(offset,limit));
+                return complianceRepository.findAllByStatusOrderByIdDesc(compliance_status_unassigned, new PageRequest(offset, limit));
         }
     }
 
-    public ComplianceRequestDocument getCompliaceRequestDocument(String requestNumber){
+    public ComplianceRequestDocument getCompliaceRequestDocument(String requestNumber) {
         ComplianceRequest complianceRequest = complianceRequestRepository.findComplianceRequestByRequestNumber(requestNumber);
 
+        ComplianceRequestDocument complianceRequestDocument = new ComplianceRequestDocument();
+        //complianceRequestDocument.setContent(generateDocumentRequestOrder(complianceRequest));
+        if (complianceRequest != null) {
 
-            ComplianceRequestDocument complianceRequestDocument = new ComplianceRequestDocument();
-            //complianceRequestDocument.setContent(generateDocumentRequestOrder(complianceRequest));
-            if(complianceRequest!=null){
+            try {
+                S3ObjectInputStream s3Str = s3Client.getObject(bucketName, complianceRequest.getS3Key()).getObjectContent();
 
-                try{
-                    S3ObjectInputStream s3Str = s3Client.getObject(bucketName,complianceRequest.getS3Key()).getObjectContent();
-
-                    complianceRequestDocument.setContent(IOUtils.toByteArray(s3Str));
-                }catch(Exception e){
-                    LOGGER.error("Error Obtaining File Content",e);
-                }/*finally{}*/
+                complianceRequestDocument.setContent(IOUtils.toByteArray(s3Str));
+            } catch (Exception e) {
+                LOGGER.error("Error Obtaining File Content", e);
+            }/*finally{}*/
 
 
-                return complianceRequestDocument;
-            }
-            else
-                return null;
+            return complianceRequestDocument;
+        } else
+            return null;
     }
 
     /*For now this table has 2 columns. When converted to generic , pdf table will also be passed, aong with column numbers*/
@@ -991,7 +965,7 @@ public class ComplianceService {
         PdfPTable table = new PdfPTable(2);
         table.getDefaultCell().setBorder(0);
         table.setWidthPercentage(100);
-        table.setWidths(new float[] { 2, 1 });
+        table.setWidths(new float[]{2, 1});
 
         for (int i = 0; i < number; i++) {
             Paragraph paragraph1 = new Paragraph(" ");
@@ -1013,7 +987,8 @@ public class ComplianceService {
     }
 
 
-    public Compliance updateCompliance(Compliance compliance){
+    @Transactional
+    public Compliance updateCompliance(Compliance compliance) {
 
         Compliance dbCompliance=complianceRepository.findComplianceByComplianceNumber(compliance.getComplianceNumber());
 
@@ -1048,11 +1023,19 @@ public class ComplianceService {
                 notificationSourceBean.publishNewNotification(notification);
 
             }
+            List<Contact> contactList = new ArrayList<>();
+            if(compliance.getIssuingAuthority()!=null)
+                contactList.add(compliance.getIssuingAuthority());
+            if(compliance.getUser()!=null)
+                contactList.add(compliance.getUser());
+            if(compliance.getVendor()!=null)
+                contactList.add(compliance.getVendor());
+
+
+            persistContacts(contactList);
             dbCompliance.copyComplianceValues(compliance);
             try {
                 //-- save contact first
-                contactRepository.save(dbCompliance.getIssuingAuthority());
-                contactRepository.save(dbCompliance.getUser());
 
 
                 complianceRepository.save(dbCompliance);
@@ -1070,25 +1053,49 @@ public class ComplianceService {
         return compliance;
     }
 
-    String getComplianceRequestStatusLabel(String status){
-        if(compliance_request_status_pending.equalsIgnoreCase( status))
+
+    //This function gets a contact list and if any if it has an id null, an id is generated
+    @Transactional
+    public void persistContacts(List<Contact> contacts){
+
+        for(Contact eachContact:contacts){
+
+            if(eachContact.getId()==null){
+                eachContact.setId(generateLongNumber());
+            }
+        }
+
+        contactRepository.save(contacts);
+        contactRepository.flush();
+
+    }
+
+    public EditComplianceRecordRequest updateCompliance(EditComplianceRecordRequest compliance, List<MultipartFile> multipartFile) {
+
+        System.out.println("tested");
+        return compliance;
+    }
+
+
+    String getComplianceRequestStatusLabel(String status) {
+        if (compliance_request_status_pending.equalsIgnoreCase(status))
             return "Pending";
-        else if(compliance_request_status_pending.equalsIgnoreCase( status))
+        else if (compliance_request_status_pending.equalsIgnoreCase(status))
             return "In Progress";
-        else if(compliance_request_status_pending.equalsIgnoreCase( status))
+        else if (compliance_request_status_pending.equalsIgnoreCase(status))
             return "Completed";
         else
             return "N/A";
     }
 
-    String getComplianceStatusLabel(String status){
-        if(compliance_status_pending.equals( status))
+    String getComplianceStatusLabel(String status) {
+        if (compliance_status_pending.equals(status))
             return "Pending";
-        else if(compliance_status_pending.equals( status))
+        else if (compliance_status_pending.equals(status))
             return "In Progress";
-        else if(compliance_status_complete.equals( status))
+        else if (compliance_status_complete.equals(status))
             return "Completed";
-        else if(compliance_status_unassigned.equals( status))
+        else if (compliance_status_unassigned.equals(status))
             return "Unassigned";
         else
             return "N/A";
@@ -1099,32 +1106,34 @@ public class ComplianceService {
     //---class created to add footer
     public class FooterTable extends PdfPageEventHelper {
         protected PdfPTable footer;
+
         public FooterTable(PdfPTable footer) {
             this.footer = footer;
         }
+
         public void onEndPage(PdfWriter writer, Document document) {
             footer.writeSelectedRows(0, -1, 36, 64, writer.getDirectContent());
         }
     }
 
 
-    PdfPTable getFooterPdf(){
+    PdfPTable getFooterPdf() {
         PdfPTable table = new PdfPTable(2);
         table.getDefaultCell().setBorder(0);
         table.setTotalWidth(570F);
         table.setWidthPercentage(100);
         try {
-            table.setWidths(new float[] { 2, 1 });
+            table.setWidths(new float[]{2, 1});
         } catch (DocumentException e) {
             e.printStackTrace();
         }
 
 
-        Paragraph first = new Paragraph("Al Sharqi Shipping Co. LLC",normalBold);
+        Paragraph first = new Paragraph("Al Sharqi Shipping Co. LLC", normalBold);
         Paragraph second;// = new Paragraph("Shipment Number: QAF-18001015",normal);
         PdfPCell leftCell = new PdfPCell(first);
 
-        Chunk chunk ;
+        Chunk chunk;
         second = new Paragraph();
         //todo: to be removed
         PdfPCell rightCell = new PdfPCell(second);
@@ -1133,7 +1142,7 @@ public class ComplianceService {
         //set border left color
         leftCell.setUseVariableBorders(true);
         //leftCell.setBorderWidthLeft(1);
-       // leftCell.setBorderColorLeft(lightBlue);
+        // leftCell.setBorderColorLeft(lightBlue);
         rightCell.setBorder(0);
         //set border left color
         rightCell.setUseVariableBorders(true);
@@ -1143,7 +1152,7 @@ public class ComplianceService {
         table.addCell(leftCell);
         table.addCell(rightCell);
 
-        chunk = new Chunk("Address:",normalBoldGray);
+        chunk = new Chunk("Address:", normalBoldGray);
         first = new Paragraph();
         first.add(chunk);
 
@@ -1151,12 +1160,12 @@ public class ComplianceService {
         //leftCell.setPaddingLeft(10);
 
 
-        chunk = new Chunk("Phone: ",normalBoldGray);
+        chunk = new Chunk("Phone: ", normalBoldGray);
         second = new Paragraph();
         second.add(chunk);
         //TODO: to be revied as what date is needed to be added
 
-        chunk = new Chunk("1111-111-5599",normal);
+        chunk = new Chunk("1111-111-5599", normal);
         second.add(chunk);
         rightCell = new PdfPCell(second);
         leftCell.setBorder(0);
@@ -1176,25 +1185,27 @@ public class ComplianceService {
         table.addCell(rightCell);
         float height = leftCell.getHeight();
 
-        chunk = new Chunk("151 Khalid Bin Walid Road, Umm Hurrair 1, Dubai,",normal);
+        chunk = new Chunk("151 Khalid Bin Walid Road, Umm Hurrair 1, Dubai,", normal);
         first = new Paragraph();
         first.add(chunk);
-        second = new Paragraph(" ",mini);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
-        leftCell.setPaddingTop(10);;
+        leftCell.setPaddingTop(10);
+        ;
 
         //leftCell.setPaddingLeft(10);
-        chunk = new Chunk("Email: ",normalBoldGray);
+        chunk = new Chunk("Email: ", normalBoldGray);
         second = new Paragraph();
         //todo: to be removed
         second.add(chunk);
-        chunk = new Chunk("ae.finance@alsharqi.co",normal);
+        chunk = new Chunk("ae.finance@alsharqi.co", normal);
         second.add(chunk);
         rightCell = new PdfPCell(second);
         leftCell.setBorder(0);
         //set border left color
         //leftCell.setPaddingLeft(10);
-        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingTop(0);
+        ;
         leftCell.setPaddingBottom(0L);
         //leftCell.setBorderWidthLeft(1);
         //leftCell.setBorderColorLeft(lightBlue);
@@ -1209,15 +1220,16 @@ public class ComplianceService {
         table.addCell(rightCell);
 
 
-        first = new Paragraph("United Arab Emirates",normal);
-        second = new Paragraph(" ",mini);
+        first = new Paragraph("United Arab Emirates", normal);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
         //leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
         rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         leftCell.setBorder(0);
         //leftCell.setPaddingLeft(10);
-        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingTop(0);
+        ;
         leftCell.setPaddingBottom(0L);
         //leftCell.setBorderWidthLeft(1);
         //leftCell.setBorderColorLeft(lightBlue);
@@ -1238,7 +1250,7 @@ public class ComplianceService {
         //first.add(chunk);
         //chunk = new Chunk("121212 ",normal);
         // first.add(chunk);
-        second = new Paragraph(" ",mini);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
         //leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
@@ -1248,7 +1260,8 @@ public class ComplianceService {
         leftCell.setUseVariableBorders(true);
         //leftCell.setBorderWidthLeft(1);
         //leftCell.setBorderColorLeft(lightBlue);
-        leftCell.setPaddingTop(0);;
+        leftCell.setPaddingTop(0);
+        ;
         leftCell.setPaddingBottom(0L);
         //leftCell.setPaddingLeft(10);
         rightCell.setBorder(0);
@@ -1269,7 +1282,7 @@ public class ComplianceService {
         //chunk = new Chunk("ae.finance@alsharqi.co ",normal);
 
         //first.add(chunk);
-        second = new Paragraph(" ",mini);
+        second = new Paragraph(" ", mini);
         leftCell = new PdfPCell(first);
         //leftCell.setPaddingLeft(10);
         rightCell = new PdfPCell(second);
@@ -1291,11 +1304,11 @@ public class ComplianceService {
     }
 
     //Task 432 Re-index Compliance Request -Ammar
-    public DefaultResponse indexComplianceRequests(){
+    public DefaultResponse indexComplianceRequests() {
         Authentication principal = SecurityContextHolder.getContext().getAuthentication();
-        if(principal.getAuthorities().toString().contains("ROLE_ADMIN")){
-            Iterable<ComplianceRequest> complianceRequests=complianceRequestRepository.findAll();
-            for(ComplianceRequest complianceRequest:complianceRequests){
+        if (principal.getAuthorities().toString().contains("ROLE_ADMIN")) {
+            Iterable<ComplianceRequest> complianceRequests = complianceRequestRepository.findAll();
+            for (ComplianceRequest complianceRequest : complianceRequests) {
                 kafkaAsynService.sendCompliance(complianceRequest);
             }
             return new DefaultResponse("N/A", "Compliance Requests sent to search-service successfully.", "F001");
@@ -1303,13 +1316,13 @@ public class ComplianceService {
         return new DefaultResponse("N/A", "You need admin authentication to do this operation.", "F001");
     }
 
-    public Iterable<Compliance> getAllCompliancesWithFilterBySquad(ListOrganization listOrganization, int offset, int limit){
+    public Iterable<Compliance> getAllCompliancesWithFilterBySquad(ListOrganization listOrganization, int offset, int limit) {
 
         List<String> stringList = new ArrayList<>();
 
         for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();
 
-             organizationIdCLassIterator.hasNext();){
+             organizationIdCLassIterator.hasNext(); ) {
 
             OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
 
@@ -1320,56 +1333,47 @@ public class ComplianceService {
 
         ComplianceFilter complianceFilter = listOrganization.getFilterObject();
 
-        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
-            return complianceRepository.findAllByComplianceRequest_OrganizationIdInOrderByIdDesc(stringList,new PageRequest(offset,limit));
+        if (complianceFilter.getOrganizationName() == null && complianceFilter.getEndDate() == null && complianceFilter.getStartDate() == null) {
+            return complianceRepository.findAllByComplianceRequest_OrganizationIdInOrderByIdDesc(stringList, new PageRequest(offset, limit));
         }
 
-        if(complianceFilter.getOrganizationName()==null ) {
-            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),stringList,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_pending,stringList,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_progress,stringList,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_unassigned,stringList,new PageRequest(offset,limit));
-            }
-            else
-                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),compliance_status_complete,stringList,new PageRequest(offset,limit));
-        }
-        else{
+        if (complianceFilter.getOrganizationName() == null) {
             if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(),new PageRequest(offset,limit));
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), stringList, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_pending, stringList, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_progress, stringList, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("unassigned")) {
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_unassigned, stringList, new PageRequest(offset, limit));
+            } else
+                return complianceRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndComplianceRequest_OrganizationIdOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), compliance_status_complete, stringList, new PageRequest(offset, limit));
+        } else {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameOrderByIdDesc(complianceFilter.getOrganizationName(), new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_pending,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_pending, new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_progress,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_progress, new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("unassigned")){
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_unassigned,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("unassigned")) {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_unassigned, new PageRequest(offset, limit));
                 return x;
-            }
-            else{
-                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_status_complete,new PageRequest(offset,limit));
+            } else {
+                Iterable<Compliance> x = complianceRepository.findAllByComplianceRequest_OrganizationNameAndStatusOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_status_complete, new PageRequest(offset, limit));
                 return x;
             }
 
         }
     }
 
-    public Page<ComplianceRequest> getAllComplianceRequestsPendingBySquad(String sortBy,String sort,int offset, int limit,ListOrganization listOrganization){
+    public Page<ComplianceRequest> getAllComplianceRequestsPendingBySquad(String sortBy, String sort, int offset, int limit, ListOrganization listOrganization) {
 
         List<String> stringList = new ArrayList<>();
 
-        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();organizationIdCLassIterator.hasNext();){
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator(); organizationIdCLassIterator.hasNext(); ) {
 
             OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
 
@@ -1378,45 +1382,41 @@ public class ComplianceService {
         }
 
 
-        if(sortBy.equalsIgnoreCase("type")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByTypeAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        if (sortBy.equalsIgnoreCase("type")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByTypeAsc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByTypeDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("customer")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByOrganizationNameAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByTypeDesc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("customer")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByOrganizationNameAsc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByOrganizationNameDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("due-date")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByDueDateAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByOrganizationNameDesc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("due-date")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByDueDateAsc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByDueDateDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("status")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByStatusAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByDueDateDesc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
+        } else if (sortBy.equalsIgnoreCase("status")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByStatusAsc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByStatusDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
-        }
-        else{
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdAsc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByStatusDesc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
+        } else {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdAsc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
             else
-                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
         }
     }
 
-    public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilterAndSquad(ListOrganization listOrganization,int offset, int limit){
+    public Iterable<ComplianceRequest> getAllComplianceRequestsWithFilterAndSquad(ListOrganization listOrganization, int offset, int limit) {
 
         List<String> stringList = new ArrayList<>();
 
         for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();
 
-             organizationIdCLassIterator.hasNext();){
+             organizationIdCLassIterator.hasNext(); ) {
 
             OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
 
@@ -1425,35 +1425,29 @@ public class ComplianceService {
         }
 
         ComplianceFilter complianceFilter = listOrganization.getFilterObject();
-        if(complianceFilter.getOrganizationName()==null && complianceFilter.getEndDate()==null && complianceFilter.getStartDate()==null){
-            return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending,stringList,new PageRequest(offset,limit));
+        if (complianceFilter.getOrganizationName() == null && complianceFilter.getEndDate() == null && complianceFilter.getStartDate() == null) {
+            return complianceRequestRepository.findAllByStatusAndOrganizationIdInOrderByIdDesc(compliance_request_status_pending, stringList, new PageRequest(offset, limit));
         }
 
-        if(complianceFilter.getOrganizationName()==null ) {
-            if (complianceFilter.getStatus().equalsIgnoreCase("all") ) {
-                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),stringList,new PageRequest(offset,limit));
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"0",stringList,new PageRequest(offset,limit));
-            }
-            else
-                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(),"1",stringList,new PageRequest(offset,limit));
-        }
-        else{
+        if (complianceFilter.getOrganizationName() == null) {
             if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),stringList,new PageRequest(offset,limit));
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), stringList, new PageRequest(offset, limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), "0", stringList, new PageRequest(offset, limit));
+            } else
+                return complianceRequestRepository.findAllByDueDateAfterAndDueDateBeforeAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getStartDate(), complianceFilter.getEndDate(), "1", stringList, new PageRequest(offset, limit));
+        } else {
+            if (complianceFilter.getStatus().equalsIgnoreCase("all")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(), stringList, new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("pending")){
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),"0",stringList,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("pending")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(), "0", stringList, new PageRequest(offset, limit));
                 return x;
-            }
-            else if(complianceFilter.getStatus().equalsIgnoreCase("progress")){
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_progress,stringList,new PageRequest(offset,limit));
+            } else if (complianceFilter.getStatus().equalsIgnoreCase("progress")) {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_request_status_progress, stringList, new PageRequest(offset, limit));
                 return x;
-            }
-            else{
-                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(),compliance_request_status_complete,stringList,new PageRequest(offset,limit));
+            } else {
+                Iterable<ComplianceRequest> x = complianceRequestRepository.findAllByOrganizationNameAndStatusAndOrganizationIdInOrderByIdDesc(complianceFilter.getOrganizationName(), compliance_request_status_complete, stringList, new PageRequest(offset, limit));
                 return x;
             }
 
@@ -1461,30 +1455,30 @@ public class ComplianceService {
     }
 
     /*
-    * Q418-1.2 #757
-    * implement delete conpliance functionality
-    *
-    * */
+     * Q418-1.2 #757
+     * implement delete conpliance functionality
+     *
+     * */
     @Transactional
-    public DefaultResponse deleteComplianceByComplianceNumber(String complianceNumber){
-        try{
+    public DefaultResponse deleteComplianceByComplianceNumber(String complianceNumber) {
+        try {
 
             complianceRepository.deleteComplianceByComplianceNumber(complianceNumber);
-            return new DefaultResponse(complianceNumber,"Deleted Successfully","D001");
-        }catch(Exception e){
-            return new DefaultResponse(complianceNumber,"Could not delete"+e.getMessage(),"D001");
+            return new DefaultResponse(complianceNumber, "Deleted Successfully", "D001");
+        } catch (Exception e) {
+            return new DefaultResponse(complianceNumber, "Could not delete" + e.getMessage(), "D001");
         }
     }
 
-    public Set<Compliance>  addComplianceSet(Set<Compliance> complianceSet){
-        try{
+    public Set<Compliance> addComplianceSet(Set<Compliance> complianceSet) {
+        try {
             complianceRepository.save(complianceSet);
 
             Iterator<Compliance> complianceIterator = complianceSet.iterator();
             while (complianceIterator.hasNext()) {
 
                 Compliance compliance = complianceIterator.next();
-                if(compliance.getComplianceNumber()==null){
+                if (compliance.getComplianceNumber() == null) {
                     compliance.setComplianceNumber(getComplianceNumber(compliance.getId()));
                 }
 
@@ -1492,7 +1486,7 @@ public class ComplianceService {
             complianceRepository.save(complianceSet);
 
             return complianceSet;
-        }catch(Exception e){
+        } catch (Exception e) {
             return null;
         }
     }
@@ -1506,12 +1500,12 @@ public class ComplianceService {
      * then it deletes the compliance request
      * */
     @Transactional
-    public DefaultResponse deleteComplianceRequestByComplianceRequestNumber(String complianceRequestNumber){
-        try{
+    public DefaultResponse deleteComplianceRequestByComplianceRequestNumber(String complianceRequestNumber) {
+        try {
 
             ComplianceRequest complianceRequest = complianceRequestRepository.findComplianceRequestByRequestNumber(complianceRequestNumber);
 
-            if(complianceRequest!=null && complianceRequest.getCompliances().size()>0) {
+            if (complianceRequest != null && complianceRequest.getCompliances().size() > 0) {
                 //- create list of complaince numbers and call function to delete them
                 List<String> complainceNumbers = new ArrayList<String>();
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
@@ -1523,28 +1517,28 @@ public class ComplianceService {
             }
 
             complianceRequestRepository.deleteComplianceRequestByRequestNumber(complianceRequestNumber);
-            return new DefaultResponse(complianceRequestNumber,"Deleted Successfully","D001");
-        }catch(Exception e){
-            return new DefaultResponse(complianceRequestNumber,"Could not delete"+e.getMessage(),"D001");
+            return new DefaultResponse(complianceRequestNumber, "Deleted Successfully", "D001");
+        } catch (Exception e) {
+            return new DefaultResponse(complianceRequestNumber, "Could not delete" + e.getMessage(), "D001");
         }
     }
 
 
     /*
-    * Deletes list of compliances by using list of compliance numbers
-    * */
+     * Deletes list of compliances by using list of compliance numbers
+     * */
     @Transactional
-    public DefaultResponse deleteMultipleComplainceByComplianceNumbers(List<String> complainceNumbers){
-        try{
+    public DefaultResponse deleteMultipleComplainceByComplianceNumbers(List<String> complainceNumbers) {
+        try {
             complianceRepository.deleteAllByComplianceNumbers(complainceNumbers);
-            return new DefaultResponse(complainceNumbers.get(0),"Deleted Successfully","D001");
-        }catch(Exception e){
-            return new DefaultResponse(complainceNumbers.get(0),"Could not delete"+e.getMessage(),"D001");
+            return new DefaultResponse(complainceNumbers.get(0), "Deleted Successfully", "D001");
+        } catch (Exception e) {
+            return new DefaultResponse(complainceNumbers.get(0), "Could not delete" + e.getMessage(), "D001");
         }
     }
 
-    public Iterable<ComplianceRequest> getConditionalComplianceRequests(String searchQuery,Integer offset,Integer limit,String sort,String orderBy) throws ParseException {
-        if(searchQuery.contains(".")) {
+    public Iterable<ComplianceRequest> getConditionalComplianceRequests(String searchQuery, Integer offset, Integer limit, String sort, String orderBy) throws ParseException {
+        if (searchQuery.contains(".")) {
             searchQuery = searchQuery.replace(".", "-");
             String[] split = searchQuery.split("-");
             if (split.length == 2) {
@@ -1556,60 +1550,57 @@ public class ComplianceService {
             }
         }
 
-        if(searchQuery.equalsIgnoreCase("completed"))
+        if (searchQuery.equalsIgnoreCase("completed"))
             searchQuery = "2";
 
-        if(searchQuery.equalsIgnoreCase("pending"))
+        if (searchQuery.equalsIgnoreCase("pending"))
             searchQuery = "0";
 
-        if(searchQuery.equalsIgnoreCase("in progress"))
+        if (searchQuery.equalsIgnoreCase("in progress"))
             searchQuery = "1";
 
-    
-        if(orderBy.equalsIgnoreCase("customer")){
-            if(sort.equalsIgnoreCase("asc"))
+
+        if (orderBy.equalsIgnoreCase("customer")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByOrganizationNameAsc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
             else
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByOrganizationNameDesc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
-        }
-        else if(orderBy.equalsIgnoreCase("type")){
-            if(sort.equalsIgnoreCase("asc"))
+        } else if (orderBy.equalsIgnoreCase("type")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByTypeAsc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
             else
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByTypeDesc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
-        }
-        else if(orderBy.equalsIgnoreCase("due-date")){
-            if(sort.equalsIgnoreCase("asc"))
+        } else if (orderBy.equalsIgnoreCase("due-date")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateAsc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
             else
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateDesc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
-        }
-        else{
-            if(sort.equalsIgnoreCase("asc"))
+        } else {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIdAsc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
             else
                 return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIdDesc(
-                        searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,new PageRequest(offset,limit)
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(offset, limit)
                 );
         }
     }
 
-    public Page<Compliance> getAllCompliancesByCondition(String searchQuery,String sort,String sortBy,Integer page,Integer limit){
-        if(searchQuery.contains(".")) {
+    public Page<Compliance> getAllCompliancesByCondition(String searchQuery, String sort, String sortBy, Integer page, Integer limit) {
+        if (searchQuery.contains(".")) {
             searchQuery = searchQuery.replace(".", "-");
             String[] split = searchQuery.split("-");
             if (split.length == 2) {
@@ -1621,80 +1612,73 @@ public class ComplianceService {
             }
         }
 
-        if(searchQuery.equalsIgnoreCase("completed"))
+        if (searchQuery.equalsIgnoreCase("completed"))
             searchQuery = "3";
 
-        if(searchQuery.equalsIgnoreCase("unassign"))
+        if (searchQuery.equalsIgnoreCase("unassign"))
             searchQuery = "0";
 
-        if(searchQuery.equalsIgnoreCase("pending"))
+        if (searchQuery.equalsIgnoreCase("pending"))
             searchQuery = "1";
 
-        if(searchQuery.equalsIgnoreCase("in progress"))
+        if (searchQuery.equalsIgnoreCase("in progress"))
             searchQuery = "2";
 
-        if(sortBy.equalsIgnoreCase("compliance-request-number")){
-            if(sort.equalsIgnoreCase("asc"))
+        if (sortBy.equalsIgnoreCase("compliance-request-number")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIdAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
             else
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIdDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
-        }
-        else if(sortBy.equalsIgnoreCase("user")){
-            if(sort.equalsIgnoreCase("asc"))
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("user")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByUserFirstNameAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
             else
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByUserFirstNameDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
-        }
-        else if(sortBy.equalsIgnoreCase("issuing-authority")){
-            if(sort.equalsIgnoreCase("asc"))
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("issuing-authority")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIssuingAuthorityAuthorityAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
             else
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByIssuingAuthorityAuthorityDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
-        }
-        else if(sortBy.equalsIgnoreCase("customer")){
-            if(sort.equalsIgnoreCase("asc"))
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("customer")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByComplianceRequestOrganizationNameAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
             else
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByComplianceRequestOrganizationNameDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
-        }
-        else if(sortBy.equalsIgnoreCase("type")){
-            if(sort.equalsIgnoreCase("asc"))
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("type")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByTypeAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
             else
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByTypeDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
-        }
-        else if(sortBy.equalsIgnoreCase("due-date")){
-            if(sort.equalsIgnoreCase("asc"))
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("due-date")) {
+            if (sort.equalsIgnoreCase("asc"))
                 return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
+                        searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
             else
-                return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
-        }
-        else 
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusAsc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));
-            else
-                return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusDesc(
-                    searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery, new PageRequest(page,limit));                
-        
+                return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByDueDateDesc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        } else if (sort.equalsIgnoreCase("asc"))
+            return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusAsc(
+                    searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+        else
+            return complianceRepository.findAllByComplianceNumberContainingOrUserFirstNameContainingOrUserLastNameContainingOrIssuingAuthorityAuthorityContainingOrComplianceRequestOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusDesc(
+                    searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, new PageRequest(page, limit));
+
     }
 
-    public Page<ComplianceRequest> getAllComplianceRequestsBySquad(String searchQuery,String sortBy,String sort,int page, int limit,ListOrganization listOrganization){
+    public Page<ComplianceRequest> getAllComplianceRequestsBySquad(String searchQuery, String sortBy, String sort, int page, int limit, ListOrganization listOrganization) {
 
         List<String> stringList = new ArrayList<>();
 
-        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator();organizationIdCLassIterator.hasNext();){
+        for (Iterator<OrganizationIdCLass> organizationIdCLassIterator = listOrganization.getOrganizationIdCLasses().iterator(); organizationIdCLassIterator.hasNext(); ) {
 
             OrganizationIdCLass organizationIdCLass = organizationIdCLassIterator.next();
 
@@ -1702,7 +1686,7 @@ public class ComplianceService {
 
         }
 
-        if(searchQuery.contains(".")) {
+        if (searchQuery.contains(".")) {
             searchQuery = searchQuery.replace(".", "-");
             String[] split = searchQuery.split("-");
             if (split.length == 2) {
@@ -1714,47 +1698,177 @@ public class ComplianceService {
             }
         }
 
-        if(searchQuery.equalsIgnoreCase("completed"))
+        if (searchQuery.equalsIgnoreCase("completed"))
             searchQuery = "2";
 
-        if(searchQuery.equalsIgnoreCase("pending"))
+        if (searchQuery.equalsIgnoreCase("pending"))
             searchQuery = "0";
 
-        if(searchQuery.equalsIgnoreCase("in progress"))
+        if (searchQuery.equalsIgnoreCase("in progress"))
             searchQuery = "1";
 
 
-        if(sortBy.equalsIgnoreCase("type")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+        if (sortBy.equalsIgnoreCase("type")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeAsc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
             else
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("customer")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByTypeDesc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("customer")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameAsc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
             else
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("due-date")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByOrganizationNameDesc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("due-date")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateAsc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
             else
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
-        }
-        else if(sortBy.equalsIgnoreCase("status")){
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByDueDateDesc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
+        } else if (sortBy.equalsIgnoreCase("status")) {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusAsc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
             else
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
-        }
-        else{
-            if(sort.equalsIgnoreCase("asc"))
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdAsc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByStatusDesc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
+        } else {
+            if (sort.equalsIgnoreCase("asc"))
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdAsc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
             else
-                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdDesc(searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,searchQuery,stringList,new PageRequest(page,limit));
+                return complianceRequestRepository.findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseAndOrganizationIdInOrderByIdDesc(searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, stringList, new PageRequest(page, limit));
         }
     }
 
+    public Set<ComplianceFileUploadResponse> uploadComplianceFileService(List<MultipartFile> multipartFileList, String complianceNumber) {
+
+        Set<ComplianceFileUploadResponse> uploadedFiles = null;
+        try {
+            Compliance compliance = complianceRepository.findComplianceByComplianceNumber(complianceNumber);
+            if (compliance != null) {
+                uploadedFiles = uploadComplianceFile(multipartFileList);
+                Set<FileAttachments> attachments = new HashSet<FileAttachments>();
+                for (ComplianceFileUploadResponse eachResponse : uploadedFiles) {
+
+                    FileAttachments attachment = new FileAttachments();
+                    attachment.setCompliance(compliance);
+                    attachment.copyValues(eachResponse);
+                    attachments.add(attachment);
+                }
+                compliance.setAttachments(attachments);
+            }
+            complianceRepository.save(compliance);
+        } catch (Exception e) {
+            LOGGER.error("Error while storing file for compliance" + complianceNumber + e);
+        }
+        //--return newly added files
+        return uploadedFiles;
+    }
+
+
+    /*
+     * The uploads file list and for each response create attachment
+     * */
+    Set<ComplianceFileUploadResponse> uploadComplianceFile(List<MultipartFile> multipartFileList) {
+
+        Set<ComplianceFileUploadResponse> fileResponses = new HashSet<ComplianceFileUploadResponse>();
+        for (MultipartFile file : multipartFileList) {
+            ComplianceFileUploadResponse response = uploadFile(file);
+            if (response != null) {
+                fileResponses.add(response);
+            }
+        }
+
+        return fileResponses;
+    }
+
+    //this function uploads a file to s3 bucket and returns url
+    public ComplianceFileUploadResponse uploadFile(MultipartFile file) {
+        ComplianceFileUploadResponse response = new ComplianceFileUploadResponse();
+        LOGGER.debug("inside service function of uploading file to s3");
+        try {
+            File convFile = new File(file.getOriginalFilename());
+            convFile.createNewFile();
+            FileOutputStream fos = new FileOutputStream(convFile);
+            fos.write(file.getBytes());
+            fos.close();
+            String fileName = generateFileName(file.getOriginalFilename());
+            String fileUrl = s3EnpointCustomUploadedFileUrl + "/" + complianceFolderName + "/" + fileName;
+            s3Client.putObject(new PutObjectRequest(bucketName + "/" + complianceFolderName, fileName, convFile));
+            response.setFileLink(fileUrl);
+            response.setFileName(file.getOriginalFilename());
+            LOGGER.info("File uploaded Successfully");
+            convFile.delete();
+            return response;
+        } catch (Exception e) {
+            LOGGER.error("Error while uploading file to s3", e);
+            e.printStackTrace();
+            response.setFileIdentifier("Fail");
+            return response;
+        }
+    }
+
+    private String generateFileName(String filename) {
+        return new Date().getTime() + "-" + filename;
+    }
+
+
+    public ComplianceFileUploadResponse getFile(String url) {
+        LOGGER.debug("Inside service function of getting file from s3");
+        ComplianceFileUploadResponse response = new ComplianceFileUploadResponse();
+        try {
+            String[] parts = url.split("/");
+            String key = "";
+            for (int i = 3; i < parts.length; i++) {
+                key += parts[i];
+                if (i != parts.length - 1) {
+                    key += "/";
+                }
+            }
+//            String key=parts[parts.length-1];
+            GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, key);
+            S3Object s3Object = s3Client.getObject(getObjectRequest);
+
+            S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
+
+            byte[] bytes = IOUtils.toByteArray(objectInputStream);
+
+            String fileName = URLEncoder.encode(key, "UTF-8").replaceAll("\\+", "%20");
+
+            response.setContent(bytes);
+            response.setContentLength(bytes.length);
+            response.setFileName(fileName);
+            response.setContentType(getFileContentType(fileName));
+            response.setResponseIdentifier("Success");
+            LOGGER.info("File got successfully. Returning to controller");
+            return response;
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOGGER.error("Error while getting file from s3", e);
+            response.setResponseIdentifier("Failure");
+            return response;
+        }
+    }
+
+
+    String getFileContentType(String extention) {
+
+        String name = Constant.EMPTY_STRING;
+        if (extention != null) {
+            if (Constant.EMPTY_STRING.equals(extention) == false) {
+                extention.contains(Constant.FILE_TYPE_PNG);
+                return Constant.CONTENT_TYPE_PNG;
+            }
+            else if(Constant.EMPTY_STRING.equals(extention) == false) {
+                extention.contains(Constant.FILE_TYPE_PDF);
+                return Constant.CONTENT_TYPE_PDF;
+            }
+
+        }
+
+        {
+            return name;
+        }
+    }
+
+    Long generateLongNumber(){
+        return  Math.abs(new Random().nextLong());
+    }
 }
 

@@ -6,6 +6,7 @@ import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequestDocument;
 import com.alsharqi.compliance.exception.EmptyEntityTableException;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
+import com.alsharqi.compliance.request.EditComplianceRecordRequest;
 import com.alsharqi.compliance.response.DefaultResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,10 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.rmi.CORBA.Util;
 import java.text.ParseException;
 import java.util.Optional;
+import java.util.List;
 
 @Controller
 @CrossOrigin
@@ -324,4 +327,17 @@ public class ComplianceController {
                     .orElseThrow(() -> new EmptyEntityTableException("No request Exists",0L));
 
     }
+
+    @RequestMapping(value="/files/upload",method= RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity uploadFile(@RequestParam("document") List<MultipartFile> multipartFileList,@RequestParam("complianceNumber") String complianceNumber){
+        return new ResponseEntity(complianceService.uploadComplianceFileService(multipartFileList,complianceNumber),HttpStatus.OK);
+    }
+
+    @RequestMapping(value="/files/s3",method= RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity fetchFileFromS3Controller(@RequestParam("url") String url){
+        return new ResponseEntity(complianceService.getFile(url),HttpStatus.OK);
+    }
+
 }
