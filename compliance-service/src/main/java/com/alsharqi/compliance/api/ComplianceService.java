@@ -1,6 +1,5 @@
 package com.alsharqi.compliance.api;
 
-import com.alsharqi.compliance.attachment.Attachment;
 import com.alsharqi.compliance.attachment.FileAttachments;
 import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.compliance.ComplianceRepository;
@@ -35,11 +34,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.access.method.P;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -55,11 +52,8 @@ import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
-
-import static org.springframework.data.domain.Sort.Direction.ASC;
-import static org.springframework.data.domain.Sort.Direction.DESC;
+import java.util.*;
 
 @Service
 public class ComplianceService {
@@ -80,6 +74,9 @@ public class ComplianceService {
 
     @Autowired
     KafkaAsynService kafkaAsynService;
+
+    @Autowired
+    Environment environment;
 
     private final String compliance_request_status_pending = "0";
     private final String compliance_request_status_progress = "1";
@@ -172,7 +169,7 @@ public class ComplianceService {
 
     @Transactional
     public ComplianceRequest addRequest(ComplianceRequest complianceRequest) {
-
+        String companyName;
         //--- loop through each compliance so that
         if (complianceRequest.getCompliances() != null && complianceRequest.getCompliances().size() > 0) {
             Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
@@ -203,19 +200,22 @@ public class ComplianceService {
 
             //Send complianceRequest to Search Service-Ammar
             //kafkaAsynService.sendCompliance(complianceRequest);
-
+            LOGGER.info("Here in Compliance Service and Shipment #"+complianceRequest.getShipmentNumber());
+            companyName = getCompanyName(complianceRequest.getShipmentNumber());
+            LOGGER.info("Company/Username: "+companyName);
             if (complianceRequest.getCompliances().size() > 0) {
                 Iterator<Compliance> complianceIterator = complianceRequest.getCompliances().iterator();
                 while (complianceIterator.hasNext()) {
                     Compliance currentCompliance = complianceIterator.next();
                     Notification aNotification = new Notification();
                     aNotification.setMessage("Compliance Created: " + currentCompliance.getType());
-                    aNotification.setUsername("Qafila");
+                    aNotification.setUsername(companyName);
                     aNotification.setReadStatus(false);
                     aNotification.setType("auto");
                     aNotification.setShipmentNumber(complianceRequest.getShipmentNumber());
                     NotificationModel notification = new NotificationModel("CREATE", aNotification, "carrierBooked");
                     notificationSourceBean.publishNewNotification(notification);
+                    LOGGER.info("Notification has published from Compliance Service");
                 }
             }
         } catch (Exception e) {
@@ -989,7 +989,7 @@ public class ComplianceService {
 
     @Transactional
     public Compliance updateCompliance(Compliance compliance) {
-
+        String companyName;
         Compliance dbCompliance=complianceRepository.findComplianceByComplianceNumber(compliance.getComplianceNumber());
 
         if(dbCompliance!=null) {
@@ -1012,16 +1012,19 @@ public class ComplianceService {
             if( compliance_status_complete.equals(v1) && compliance_status_complete.equals(v2)==false) {
                 compliance.setDateOfCompletion(new Date());
 
+                LOGGER.info("Here in Compliance Service and Shipment#: "+dbCompliance.getComplianceRequest().getShipmentNumber());
+                companyName = getCompanyName(dbCompliance.getComplianceRequest().getShipmentNumber());
+                LOGGER.info("Company/Username: "+companyName);
 
                 Notification aNotification = new Notification();
                 aNotification.setMessage("Compliance Completed: "+ compliance.getType());
-                aNotification.setUsername("Qafila");
+                aNotification.setUsername(companyName);
                 aNotification.setReadStatus(false);
                 aNotification.setType("auto");
                 aNotification.setShipmentNumber(dbCompliance.getComplianceRequest().getShipmentNumber());
                 NotificationModel notification = new NotificationModel("CREATE", aNotification, "carrierBooked");
                 notificationSourceBean.publishNewNotification(notification);
-
+                LOGGER.info("Updating Shipments in compliance service ");
             }
             List<Contact> contactList = new ArrayList<>();
             if(compliance.getIssuingAuthority()!=null)
@@ -1878,5 +1881,22 @@ public class ComplianceService {
     Long generateLongNumber(){
         return  Math.abs(new Random().nextLong());
     }
+
+    public String getCompanyName(String shipmentNumber) {
+        String companyName ="";
+        String prefix;
+        if(shipmentNumber.startsWith("ALS"))
+        {
+            prefix = "ALS";
+            companyName = environment.getProperty(prefix+".company.name");
+        }
+        if(shipmentNumber.startsWith("QAF"))
+        {
+            prefix = "QAF";
+            companyName = environment.getProperty(prefix+".company.name");
+        }
+        return companyName;
+    }
+
 }
 
