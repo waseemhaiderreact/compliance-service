@@ -13,4 +13,6 @@ public class Constant {
 
 
     public static String EMPTY_STRING = "";
+    public static String QAFILA = "QAF";
+    public static String ALSHARQI = "ALS";
 }

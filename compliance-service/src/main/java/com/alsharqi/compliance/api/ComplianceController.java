@@ -6,7 +6,6 @@ import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequestDocument;
 import com.alsharqi.compliance.exception.EmptyEntityTableException;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
-import com.alsharqi.compliance.request.EditComplianceRecordRequest;
 import com.alsharqi.compliance.response.DefaultResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,10 +15,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.rmi.CORBA.Util;
 import java.text.ParseException;
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @CrossOrigin
@@ -339,5 +337,4 @@ public class ComplianceController {
     public ResponseEntity fetchFileFromS3Controller(@RequestParam("url") String url){
         return new ResponseEntity(complianceService.getFile(url),HttpStatus.OK);
     }
-
 }

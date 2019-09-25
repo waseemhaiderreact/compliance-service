@@ -55,6 +55,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 
+import static com.alsharqi.compliance.util.Constant.ALSHARQI;
+import static com.alsharqi.compliance.util.Constant.QAFILA;
+
 @Service
 public class ComplianceService {
 
@@ -1882,18 +1885,15 @@ public class ComplianceService {
         return  Math.abs(new Random().nextLong());
     }
 
-    public String getCompanyName(String shipmentNumber) {
+    private String getCompanyName(String shipmentNumber) {
         String companyName ="";
-        String prefix;
-        if(shipmentNumber.startsWith("ALS"))
+        if(shipmentNumber.startsWith(ALSHARQI))
         {
-            prefix = "ALS";
-            companyName = environment.getProperty(prefix+".company.name");
+            companyName = environment.getProperty(ALSHARQI+".company.name");
         }
-        if(shipmentNumber.startsWith("QAF"))
+        if(shipmentNumber.startsWith(QAFILA))
         {
-            prefix = "QAF";
-            companyName = environment.getProperty(prefix+".company.name");
+            companyName = environment.getProperty(QAFILA+".company.name");
         }
         return companyName;
     }
