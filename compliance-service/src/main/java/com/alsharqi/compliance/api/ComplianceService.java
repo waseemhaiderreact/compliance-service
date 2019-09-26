@@ -1897,6 +1897,4 @@ public class ComplianceService {
         }
         return companyName;
     }
-
 }
-
