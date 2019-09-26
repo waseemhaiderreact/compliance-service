@@ -1891,7 +1891,7 @@ public class ComplianceService {
         {
             companyName = environment.getProperty(ALSHARQI+".company.name");
         }
-        if(shipmentNumber.startsWith(QAFILA))
+        else if(shipmentNumber.startsWith(QAFILA))
         {
             companyName = environment.getProperty(QAFILA+".company.name");
         }
