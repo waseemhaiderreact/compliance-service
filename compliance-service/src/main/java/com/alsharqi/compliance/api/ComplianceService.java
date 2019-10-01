@@ -1,6 +1,5 @@
 package com.alsharqi.compliance.api;
 
-import com.alsharqi.compliance.attachment.Attachment;
 import com.alsharqi.compliance.attachment.FileAttachments;
 import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.compliance.ComplianceRepository;
@@ -12,6 +11,9 @@ import com.alsharqi.compliance.contact.Contact;
 import com.alsharqi.compliance.contact.ContactRepository;
 import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
+import com.alsharqi.compliance.events.shipment.ShipmentModel;
+import com.alsharqi.compliance.events.shipment.ShipmentSourceBean;
+import com.alsharqi.compliance.events.shipment.ShipmentStatus;
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
@@ -31,15 +33,10 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.access.method.P;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -55,16 +52,14 @@ import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
-
-import static org.springframework.data.domain.Sort.Direction.ASC;
-import static org.springframework.data.domain.Sort.Direction.DESC;
+import java.util.*;
 
 @Service
 public class ComplianceService {
 
-    private static final Logger LOGGER = LogManager.getLogger(ComplianceService.class);
+//    private static final Logger LOGGER = LogManager.getLogger();
+//    private static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(ComplianceService.class);
 
     @Autowired
     private ComplianceRequestRepository complianceRequestRepository;
@@ -109,6 +104,9 @@ public class ComplianceService {
 
     private AmazonS3 s3Client;
 
+    @Autowired
+    private ShipmentSourceBean shipmentSourceBean;
+
     @PostConstruct
     private void initializeAmazon() {
 
@@ -127,7 +125,7 @@ public class ComplianceService {
 
             }
         } catch (Exception e) {
-            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
+//            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
         }
     }
 
@@ -266,6 +264,9 @@ public class ComplianceService {
 
             //-- check for status if complete, add date of completion
             String requestStatus = complianceRequest.getStatus();
+
+            //-- if during updating the request, the status is updated to completed then it will be true
+            Boolean updatedToCompletedFlag = false;
             if (compliance_request_status_complete.equals(requestStatus) && compliance_status_complete.equals(dbComplianceRequest.getStatus()) == false) {
                 complianceRequest.setDateOfCompletion(new Date());
                 try {
@@ -277,7 +278,7 @@ public class ComplianceService {
                         fos.close();
                         complianceRequest.setS3Key(s3Key);
                     } catch (Exception e) {
-                        LOGGER.error("Building File Content Error", e);
+//                        LOGGER.error("Building File Content Error", e);
                     } finally {
 
                         try {
@@ -290,7 +291,7 @@ public class ComplianceService {
                             putRequest.setTagging(new ObjectTagging(tags));
                             s3Client.putObject(putRequest);
                         } catch (Exception e) {
-                            LOGGER.error("S3 File Save Error", e);
+//                            LOGGER.error("S3 File Save Error", e);
                         } finally {
                             //Delete locally created document.
                             doc.delete();
@@ -300,12 +301,15 @@ public class ComplianceService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                updatedToCompletedFlag = true;
             }
 
 
             try {
 
                 if (complianceSet.size() > 0) {
+
                     complianceSet = addComplianceSet(complianceSet);
                     Iterator<Compliance> iterator = complianceSet.iterator();
                     while (iterator.hasNext())
@@ -314,7 +318,27 @@ public class ComplianceService {
 
                 complianceRequest.setCompliances(complianceSet);
                 complianceRequestRepository.save(complianceRequest);
+                complianceRequestRepository.flush();
 
+                //-- send kafka calls for status change of shipment iin case of completion of last compliance type
+                if(updatedToCompletedFlag && complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.CUSTOMS_KEYWORD)){
+
+                    java.util.List<String> statusList = new ArrayList<String>();
+                    statusList.add(Constant.COMPLIANCE_REQUEST_STATUS_PENDING);
+                    statusList.add(Constant.COMPLIANCE_REQUEST_STATUS_IN_PROGRESS);
+                    if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.IMPORT_KEYWORD)){
+
+                        int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.CUSTOMS_KEYWORD,Constant.IMPORT_KEYWORD,statusList);
+                        if(complianceRequestLeft==0)
+                            updateShipmentStatus(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_STATUS_CUSTOMS_DESTINATION_CLEARED);
+                    }
+                    else if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.EXPORT_KEYWORD)){
+
+                        int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.CUSTOMS_KEYWORD,Constant.EXPORT_KEYWORD,statusList);
+                        if(complianceRequestLeft==0)
+                            updateShipmentStatus(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_STATUS_CUSTOMS_ORIGIN_CLEARED);
+                    }
+                }
                 //send compliance request to search-service -Ammar
                 kafkaAsynService.sendCompliance(complianceRequest);
             } catch (Exception e) {
@@ -951,7 +975,7 @@ public class ComplianceService {
 
                 complianceRequestDocument.setContent(IOUtils.toByteArray(s3Str));
             } catch (Exception e) {
-                LOGGER.error("Error Obtaining File Content", e);
+//                LOGGER.error("Error Obtaining File Content", e);
             }/*finally{}*/
 
 
@@ -1004,7 +1028,7 @@ public class ComplianceService {
                 compliance.setStatus(compliance_status_pending);
             }
 
-            System.out.println(compliance_status_progress.indexOf(dbCompliance.getStatus()));
+//            System.out.println(compliance_status_progress.indexOf(dbCompliance.getStatus()));
             if( compliance_status_progress.equals(v1) && compliance_status_progress.equals(v2)==false) {
                 dbCompliance.setDateStarted(new Date());
             }
@@ -1755,7 +1779,7 @@ public class ComplianceService {
             }
             complianceRepository.save(compliance);
         } catch (Exception e) {
-            LOGGER.error("Error while storing file for compliance" + complianceNumber + e);
+//            LOGGER.error("Error while storing file for compliance" + complianceNumber + e);
         }
         //--return newly added files
         return uploadedFiles;
@@ -1781,7 +1805,7 @@ public class ComplianceService {
     //this function uploads a file to s3 bucket and returns url
     public ComplianceFileUploadResponse uploadFile(MultipartFile file) {
         ComplianceFileUploadResponse response = new ComplianceFileUploadResponse();
-        LOGGER.debug("inside service function of uploading file to s3");
+//        LOGGER.debug("inside service function of uploading file to s3");
         try {
             File convFile = new File(file.getOriginalFilename());
             convFile.createNewFile();
@@ -1793,11 +1817,11 @@ public class ComplianceService {
             s3Client.putObject(new PutObjectRequest(bucketName + "/" + complianceFolderName, fileName, convFile));
             response.setFileLink(fileUrl);
             response.setFileName(file.getOriginalFilename());
-            LOGGER.info("File uploaded Successfully");
+//            LOGGER.info("File uploaded Successfully");
             convFile.delete();
             return response;
         } catch (Exception e) {
-            LOGGER.error("Error while uploading file to s3", e);
+//            LOGGER.error("Error while uploading file to s3", e);
             e.printStackTrace();
             response.setFileIdentifier("Fail");
             return response;
@@ -1810,7 +1834,7 @@ public class ComplianceService {
 
 
     public ComplianceFileUploadResponse getFile(String url) {
-        LOGGER.debug("Inside service function of getting file from s3");
+//        LOGGER.debug("Inside service function of getting file from s3");
         ComplianceFileUploadResponse response = new ComplianceFileUploadResponse();
         try {
             String[] parts = url.split("/");
@@ -1836,11 +1860,11 @@ public class ComplianceService {
             response.setFileName(fileName);
             response.setContentType(getFileContentType(fileName));
             response.setResponseIdentifier("Success");
-            LOGGER.info("File got successfully. Returning to controller");
+//            LOGGER.info("File got successfully. Returning to controller");
             return response;
         } catch (Exception e) {
             e.printStackTrace();
-            LOGGER.error("Error while getting file from s3", e);
+//            LOGGER.error("Error while getting file from s3", e);
             response.setResponseIdentifier("Failure");
             return response;
         }
@@ -1877,6 +1901,17 @@ public class ComplianceService {
 
     Long generateLongNumber(){
         return  Math.abs(new Random().nextLong());
+    }
+
+    public void updateShipmentStatus(String shipmentNumber,int status) {
+
+//        LOGGER.info("sending information to shipment service " + shipmentNumber);
+        ShipmentStatus aShipment = new ShipmentStatus();
+        aShipment.setShipmentNumber(shipmentNumber);
+        aShipment.setStatus(status);
+        ShipmentModel shipment = new ShipmentModel("UPDATE", aShipment);
+        shipmentSourceBean.updateShipment(shipment);
+//        LOGGER.info("sent information to shipment service " + shipmentNumber);
     }
 }
 

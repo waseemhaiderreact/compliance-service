@@ -13,4 +13,15 @@ public class Constant {
 
 
     public static String EMPTY_STRING = "";
+
+    public static String CUSTOMS_KEYWORD = "Customs";
+    public static String IMPORT_KEYWORD = "Import";
+    public static String EXPORT_KEYWORD = "Export";
+
+    public static int SHIPMENT_STATUS_CUSTOMS_ORIGIN_CLEARED = 23;
+    public static int SHIPMENT_STATUS_CUSTOMS_DESTINATION_CLEARED = 50;
+
+    public static String COMPLIANCE_REQUEST_STATUS_PENDING = "0";
+    public static String COMPLIANCE_REQUEST_STATUS_IN_PROGRESS = "1";
+    public static String COMPLIANCE_REQUEST_STATUS_COMPLETED = "2";
 }

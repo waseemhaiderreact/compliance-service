@@ -104,4 +104,9 @@ public interface ComplianceRequestRepository extends JpaRepository<ComplianceReq
     public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusAsc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
     public Page<ComplianceRequest> findAllByRequestNumberContainingOrShipmentNumberContainingOrOrganizationNameContainingOrTypeContainingOrDueDateContainingOrStatusContainingAllIgnoreCaseOrderByStatusDesc(String requestNumber,String shipmentNumber,String organizationName,String type,String dueDate,String status,Pageable page);
 
+
+    /*
+    * two type contains as one is for import and one is for customs for example
+    * */
+    public int countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(String shipmentNumber,String typeKeyword ,String secondTypeKeyword,java.util.List<String> statusList);
 }
