@@ -9,4 +9,7 @@ public interface CustomChannels {
 
     @Output("outBoundComplianceCreate")
     MessageChannel outputCompliance();
+
+    @Output("outBoundShipmnetSummary")
+    MessageChannel outputShipmentSummaryListEvent();
 }

@@ -11,6 +11,8 @@ import com.alsharqi.compliance.contact.Contact;
 import com.alsharqi.compliance.contact.ContactRepository;
 import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
+import com.alsharqi.compliance.events.shipmentsummary.SummaryListModel;
+import com.alsharqi.compliance.events.shipmentsummary.SummaryListSourceBean;
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
@@ -77,6 +79,9 @@ public class ComplianceService {
 
     @Autowired
     KafkaAsynService kafkaAsynService;
+
+    @Autowired
+    private SummaryListSourceBean summaryListSourceBean;
 
     @Autowired
     Environment environment;
@@ -1896,5 +1901,26 @@ public class ComplianceService {
             companyName = environment.getProperty(QAFILA+".company.name");
         }
         return companyName;
+    }
+    //TODO: update after adding constants
+
+    public void sendShipmentSummaryEvent(String shipmentNumber,String summaryListType){
+
+        try {
+            SummaryListModel summaryListModel = new SummaryListModel();
+            summaryListModel.setShipmentNumber(shipmentNumber);
+            summaryListModel.setDate(new Date());
+            summaryListModel.setEventAction("");
+            summaryListModel.setType(summaryListType);
+//            if (Constant.SHIPMENT_MILESTONE_CARRIER_BOOKED_TYPE.equalsIgnoreCase(summaryListType)) {
+//                summaryListModel.setDescription(Constant.SHIPMENT_MILESTONE_CARRIER_BOOKED_DESCRIPTION);
+//
+//            }
+//
+//            summaryListModel.setEventAction(Constant.SHIPMENT_SUMMARY_LIST_ACTION_CREATE);
+            summaryListSourceBean.sendShipmentSummaryKafkaEvent(summaryListModel);
+        }catch (Exception e){
+            LOGGER.error("Error while sending milesone. " + e);
+        }
     }
 }
