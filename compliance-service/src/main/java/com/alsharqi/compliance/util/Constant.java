@@ -14,6 +14,7 @@ public class Constant {
 
     public static String EMPTY_STRING = "";
 
+
     public static String CUSTOMS_KEYWORD = "Customs";
     public static String IMPORT_KEYWORD = "Import";
     public static String EXPORT_KEYWORD = "Export";
@@ -24,4 +25,8 @@ public class Constant {
     public static String COMPLIANCE_REQUEST_STATUS_PENDING = "0";
     public static String COMPLIANCE_REQUEST_STATUS_IN_PROGRESS = "1";
     public static String COMPLIANCE_REQUEST_STATUS_COMPLETED = "2";
+
+    public static String QAFILA = "QAF";
+    public static String ALSHARQI = "ALS";
+
 }
