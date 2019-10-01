@@ -290,7 +290,7 @@ public class ComplianceService {
                         fos.close();
                         complianceRequest.setS3Key(s3Key);
                     } catch (Exception e) {
-//                        LOGGER.error("Building File Content Error", e);
+                        LOGGER.error("Building File Content Error", e);
                     } finally {
 
                         try {
@@ -303,7 +303,7 @@ public class ComplianceService {
                             putRequest.setTagging(new ObjectTagging(tags));
                             s3Client.putObject(putRequest);
                         } catch (Exception e) {
-//                            LOGGER.error("S3 File Save Error", e);
+                            LOGGER.error("S3 File Save Error", e);
                         } finally {
                             //Delete locally created document.
                             doc.delete();
@@ -987,7 +987,7 @@ public class ComplianceService {
 
                 complianceRequestDocument.setContent(IOUtils.toByteArray(s3Str));
             } catch (Exception e) {
-//                LOGGER.error("Error Obtaining File Content", e);
+                LOGGER.error("Error Obtaining File Content", e);
             }/*finally{}*/
 
 
@@ -1794,7 +1794,7 @@ public class ComplianceService {
             }
             complianceRepository.save(compliance);
         } catch (Exception e) {
-//            LOGGER.error("Error while storing file for compliance" + complianceNumber + e);
+            LOGGER.error("Error while storing file for compliance" + complianceNumber + e);
         }
         //--return newly added files
         return uploadedFiles;
@@ -1820,7 +1820,7 @@ public class ComplianceService {
     //this function uploads a file to s3 bucket and returns url
     public ComplianceFileUploadResponse uploadFile(MultipartFile file) {
         ComplianceFileUploadResponse response = new ComplianceFileUploadResponse();
-//        LOGGER.debug("inside service function of uploading file to s3");
+        LOGGER.debug("inside service function of uploading file to s3");
         try {
             File convFile = new File(file.getOriginalFilename());
             convFile.createNewFile();
@@ -1832,12 +1832,12 @@ public class ComplianceService {
             s3Client.putObject(new PutObjectRequest(bucketName + "/" + complianceFolderName, fileName, convFile));
             response.setFileLink(fileUrl);
             response.setFileName(file.getOriginalFilename());
-//            LOGGER.info("File uploaded Successfully");
+            LOGGER.info("File uploaded Successfully");
             convFile.delete();
             return response;
         } catch (Exception e) {
-//            LOGGER.error("Error while uploading file to s3", e);
-            e.printStackTrace();
+            LOGGER.error("Error while uploading file to s3", e);
+//            e.printStackTrace();
             response.setFileIdentifier("Fail");
             return response;
         }
@@ -1849,7 +1849,7 @@ public class ComplianceService {
 
 
     public ComplianceFileUploadResponse getFile(String url) {
-//        LOGGER.debug("Inside service function of getting file from s3");
+        LOGGER.debug("Inside service function of getting file from s3");
         ComplianceFileUploadResponse response = new ComplianceFileUploadResponse();
         try {
             String[] parts = url.split("/");
@@ -1875,11 +1875,11 @@ public class ComplianceService {
             response.setFileName(fileName);
             response.setContentType(getFileContentType(fileName));
             response.setResponseIdentifier("Success");
-//            LOGGER.info("File got successfully. Returning to controller");
+            LOGGER.info("File got successfully. Returning to controller");
             return response;
         } catch (Exception e) {
-            e.printStackTrace();
-//            LOGGER.error("Error while getting file from s3", e);
+//            e.printStackTrace();
+            LOGGER.error("Error while getting file from s3", e);
             response.setResponseIdentifier("Failure");
             return response;
         }
@@ -1921,13 +1921,13 @@ public class ComplianceService {
 
     public void updateShipmentStatus(String shipmentNumber,int status) {
 
-//        LOGGER.info("sending information to shipment service " + shipmentNumber);
+        LOGGER.info("sending information to shipment service " + shipmentNumber);
         ShipmentStatus aShipment = new ShipmentStatus();
         aShipment.setShipmentNumber(shipmentNumber);
         aShipment.setStatus(status);
         ShipmentModel shipment = new ShipmentModel("UPDATE", aShipment);
         shipmentSourceBean.updateShipment(shipment);
-//        LOGGER.info("sent information to shipment service " + shipmentNumber);
+        LOGGER.info("sent information to shipment service " + shipmentNumber);
     }
 
 
