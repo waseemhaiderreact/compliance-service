@@ -11,6 +11,9 @@ import com.alsharqi.compliance.contact.Contact;
 import com.alsharqi.compliance.contact.ContactRepository;
 import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
+import com.alsharqi.compliance.events.shipment.ShipmentModel;
+import com.alsharqi.compliance.events.shipment.ShipmentSourceBean;
+import com.alsharqi.compliance.events.shipment.ShipmentStatus;
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
@@ -31,7 +34,6 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -55,8 +57,10 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 
+
 import static com.alsharqi.compliance.util.Constant.ALSHARQI;
 import static com.alsharqi.compliance.util.Constant.QAFILA;
+import org.apache.log4j.Logger;
 
 @Service
 public class ComplianceService {
@@ -109,6 +113,9 @@ public class ComplianceService {
 
     private AmazonS3 s3Client;
 
+    @Autowired
+    private ShipmentSourceBean shipmentSourceBean;
+
     @PostConstruct
     private void initializeAmazon() {
 
@@ -127,7 +134,7 @@ public class ComplianceService {
 
             }
         } catch (Exception e) {
-            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
+//            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
         }
     }
 
@@ -269,6 +276,9 @@ public class ComplianceService {
 
             //-- check for status if complete, add date of completion
             String requestStatus = complianceRequest.getStatus();
+
+            //-- if during updating the request, the status is updated to completed then it will be true
+            Boolean updatedToCompletedFlag = false;
             if (compliance_request_status_complete.equals(requestStatus) && compliance_status_complete.equals(dbComplianceRequest.getStatus()) == false) {
                 complianceRequest.setDateOfCompletion(new Date());
                 try {
@@ -303,12 +313,15 @@ public class ComplianceService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                updatedToCompletedFlag = true;
             }
 
 
             try {
 
                 if (complianceSet.size() > 0) {
+
                     complianceSet = addComplianceSet(complianceSet);
                     Iterator<Compliance> iterator = complianceSet.iterator();
                     while (iterator.hasNext())
@@ -317,7 +330,27 @@ public class ComplianceService {
 
                 complianceRequest.setCompliances(complianceSet);
                 complianceRequestRepository.save(complianceRequest);
+                complianceRequestRepository.flush();
 
+                //-- send kafka calls for status change of shipment iin case of completion of last compliance type
+                if(updatedToCompletedFlag && complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.CUSTOMS_KEYWORD)){
+
+                    java.util.List<String> statusList = new ArrayList<String>();
+                    statusList.add(Constant.COMPLIANCE_REQUEST_STATUS_PENDING);
+                    statusList.add(Constant.COMPLIANCE_REQUEST_STATUS_IN_PROGRESS);
+                    if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.IMPORT_KEYWORD)){
+
+                        int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.CUSTOMS_KEYWORD,Constant.IMPORT_KEYWORD,statusList);
+                        if(complianceRequestLeft==0)
+                            updateShipmentStatus(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_STATUS_CUSTOMS_DESTINATION_CLEARED);
+                    }
+                    else if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.EXPORT_KEYWORD)){
+
+                        int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.CUSTOMS_KEYWORD,Constant.EXPORT_KEYWORD,statusList);
+                        if(complianceRequestLeft==0)
+                            updateShipmentStatus(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_STATUS_CUSTOMS_ORIGIN_CLEARED);
+                    }
+                }
                 //send compliance request to search-service -Ammar
                 kafkaAsynService.sendCompliance(complianceRequest);
             } catch (Exception e) {
@@ -1007,7 +1040,7 @@ public class ComplianceService {
                 compliance.setStatus(compliance_status_pending);
             }
 
-            System.out.println(compliance_status_progress.indexOf(dbCompliance.getStatus()));
+//            System.out.println(compliance_status_progress.indexOf(dbCompliance.getStatus()));
             if( compliance_status_progress.equals(v1) && compliance_status_progress.equals(v2)==false) {
                 dbCompliance.setDateStarted(new Date());
             }
@@ -1804,7 +1837,7 @@ public class ComplianceService {
             return response;
         } catch (Exception e) {
             LOGGER.error("Error while uploading file to s3", e);
-            e.printStackTrace();
+//            e.printStackTrace();
             response.setFileIdentifier("Fail");
             return response;
         }
@@ -1845,7 +1878,7 @@ public class ComplianceService {
             LOGGER.info("File got successfully. Returning to controller");
             return response;
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             LOGGER.error("Error while getting file from s3", e);
             response.setResponseIdentifier("Failure");
             return response;
@@ -1884,6 +1917,19 @@ public class ComplianceService {
     Long generateLongNumber(){
         return  Math.abs(new Random().nextLong());
     }
+
+
+    public void updateShipmentStatus(String shipmentNumber,int status) {
+
+        LOGGER.info("sending information to shipment service " + shipmentNumber);
+        ShipmentStatus aShipment = new ShipmentStatus();
+        aShipment.setShipmentNumber(shipmentNumber);
+        aShipment.setStatus(status);
+        ShipmentModel shipment = new ShipmentModel("UPDATE", aShipment);
+        shipmentSourceBean.updateShipment(shipment);
+        LOGGER.info("sent information to shipment service " + shipmentNumber);
+    }
+
 
     private String getCompanyName(String shipmentNumber) {
         String companyName ="";
