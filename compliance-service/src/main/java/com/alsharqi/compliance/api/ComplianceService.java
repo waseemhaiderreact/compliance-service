@@ -11,9 +11,14 @@ import com.alsharqi.compliance.contact.Contact;
 import com.alsharqi.compliance.contact.ContactRepository;
 import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
+
+import com.alsharqi.compliance.events.shipmentsummary.SummaryListModel;
+import com.alsharqi.compliance.events.shipmentsummary.SummaryListSourceBean;
+
 import com.alsharqi.compliance.events.shipment.ShipmentModel;
 import com.alsharqi.compliance.events.shipment.ShipmentSourceBean;
 import com.alsharqi.compliance.events.shipment.ShipmentStatus;
+
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
@@ -83,6 +88,9 @@ public class ComplianceService {
     KafkaAsynService kafkaAsynService;
 
     @Autowired
+    private SummaryListSourceBean summaryListSourceBean;
+
+    @Autowired
     Environment environment;
 
     private final String compliance_request_status_pending = "0";
@@ -134,7 +142,7 @@ public class ComplianceService {
 
             }
         } catch (Exception e) {
-//            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
+            LOGGER.error("Amazon initialization / Bucket creation,detection issues ", e);
         }
     }
 
@@ -341,14 +349,26 @@ public class ComplianceService {
                     if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.IMPORT_KEYWORD)){
 
                         int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.CUSTOMS_KEYWORD,Constant.IMPORT_KEYWORD,statusList);
-                        if(complianceRequestLeft==0)
-                            updateShipmentStatus(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_STATUS_CUSTOMS_DESTINATION_CLEARED);
+                        if(complianceRequestLeft==0) {
+                            updateShipmentStatus(complianceRequest.getShipmentNumber(), Constant.SHIPMENT_STATUS_CUSTOMS_DESTINATION_CLEARED);
+                            sendShipmentSummaryEvent(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_MILESTONE_IMPORT_CUSTOMS_CLEARED_RECEIVED_TYPE,Constant.SHIPMENT_MILESTONE_IMPORT_CUSTOMS_CLEARED_RECEIVED_DESCRIPTION);
+                        }
                     }
                     else if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.EXPORT_KEYWORD)){
 
                         int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.CUSTOMS_KEYWORD,Constant.EXPORT_KEYWORD,statusList);
-                        if(complianceRequestLeft==0)
-                            updateShipmentStatus(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_STATUS_CUSTOMS_ORIGIN_CLEARED);
+                        if(complianceRequestLeft==0) {
+                            updateShipmentStatus(complianceRequest.getShipmentNumber(), Constant.SHIPMENT_STATUS_CUSTOMS_ORIGIN_CLEARED);
+                            sendShipmentSummaryEvent(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_MILESTONE_EXPORT_CUSTOMS_CLEARED_RECEIVED_TYPE,Constant.SHIPMENT_MILESTONE_EXPORT_CUSTOMS_CLEARED_RECEIVED_DESCRIPTION);
+                        }
+                    }
+                    else if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.VGM_KEYWORD)){
+
+                        int complianceRequestLeft = complianceRequestRepository.countAllByShipmentNumberAndTypeContainsAndTypeContainsAndStatusIn(complianceRequest.getShipmentNumber(),Constant.VGM_KEYWORD,Constant.SUBMITTED_KEYWORD,statusList);
+
+                        if(complianceRequestLeft==0) {
+                            sendShipmentSummaryEvent(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_MILESTONE_VGM_SUBMITTED_TYPE,Constant.SHIPMENT_MILESTONE_VGM_SUBMITTED_DESCRIPTION);
+                        }
                     }
                 }
                 //send compliance request to search-service -Ammar
@@ -1942,5 +1962,23 @@ public class ComplianceService {
             companyName = environment.getProperty(QAFILA+".company.name");
         }
         return companyName;
+    }
+    //TODO: update after adding constants
+
+    public void sendShipmentSummaryEvent(String shipmentNumber,String summaryListType,String summaryListDescription){
+
+        try {
+            SummaryListModel summaryListModel = new SummaryListModel();
+            summaryListModel.setShipmentNumber(shipmentNumber);
+            summaryListModel.setDate(new Date());
+            summaryListModel.setEventAction("");
+            summaryListModel.setType(summaryListType);
+            summaryListModel.setDescription(summaryListDescription);
+//
+            summaryListModel.setEventAction(Constant.SHIPMENT_SUMMARY_LIST_ACTION_CREATE);
+            summaryListSourceBean.sendShipmentSummaryKafkaEvent(summaryListModel);
+        }catch (Exception e){
+            LOGGER.error("Error while sending milesone. " + e);
+        }
     }
 }
