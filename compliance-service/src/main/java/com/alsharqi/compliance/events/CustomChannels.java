@@ -12,4 +12,7 @@ public interface CustomChannels {
 
     @Output("outBoundShipmnetSummary")
     MessageChannel outputShipmentSummaryListEvent();
+
+    @Output("outBoundShipmentUpdate")
+    MessageChannel outputShipmentStatus();
 }
