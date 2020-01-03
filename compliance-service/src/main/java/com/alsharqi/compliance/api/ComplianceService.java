@@ -12,6 +12,9 @@ import com.alsharqi.compliance.contact.ContactRepository;
 import com.alsharqi.compliance.events.notification.NotificationModel;
 import com.alsharqi.compliance.events.notification.NotificationSourceBean;
 
+import com.alsharqi.compliance.events.shipmentevent.DestinationCustomsClearedBean;
+import com.alsharqi.compliance.events.shipmentevent.OriginCustomsClearedEventBean;
+import com.alsharqi.compliance.events.shipmentevent.ShipmentEventModel;
 import com.alsharqi.compliance.events.shipmentsummary.SummaryListModel;
 import com.alsharqi.compliance.events.shipmentsummary.SummaryListSourceBean;
 
@@ -89,6 +92,13 @@ public class ComplianceService {
 
     @Autowired
     private SummaryListSourceBean summaryListSourceBean;
+
+    @Autowired
+    private DestinationCustomsClearedBean destinationCustomsClearedBean;
+
+    @Autowired
+    private OriginCustomsClearedEventBean originCustomsClearedEventBean;
+
 
     @Autowired
     Environment environment;
@@ -352,6 +362,7 @@ public class ComplianceService {
                         if(complianceRequestLeft==0) {
                             updateShipmentStatus(complianceRequest.getShipmentNumber(), Constant.SHIPMENT_STATUS_CUSTOMS_DESTINATION_CLEARED);
                             sendShipmentSummaryEvent(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_MILESTONE_IMPORT_CUSTOMS_CLEARED_RECEIVED_TYPE,Constant.SHIPMENT_MILESTONE_IMPORT_CUSTOMS_CLEARED_RECEIVED_DESCRIPTION);
+                            this.sendDestinationCustomsClearedMessage(complianceRequest.getShipmentNumber(), Constant.SHIPMENT_MILESTONE_IMPORT_CUSTOMS_CLEARED_RECEIVED_TYPE);
                         }
                     }
                     else if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.EXPORT_KEYWORD)){
@@ -360,6 +371,7 @@ public class ComplianceService {
                         if(complianceRequestLeft==0) {
                             updateShipmentStatus(complianceRequest.getShipmentNumber(), Constant.SHIPMENT_STATUS_CUSTOMS_ORIGIN_CLEARED);
                             sendShipmentSummaryEvent(complianceRequest.getShipmentNumber(),Constant.SHIPMENT_MILESTONE_EXPORT_CUSTOMS_CLEARED_RECEIVED_TYPE,Constant.SHIPMENT_MILESTONE_EXPORT_CUSTOMS_CLEARED_RECEIVED_DESCRIPTION);
+                            this.sendOriginCustomsClearedMessage(complianceRequest.getShipmentNumber(), Constant.SHIPMENT_MILESTONE_EXPORT_CUSTOMS_CLEARED_RECEIVED_TYPE);
                         }
                     }
                     else if(complianceRequest.getType()!=null && complianceRequest.getType().contains(Constant.VGM_KEYWORD)){
@@ -1981,4 +1993,24 @@ public class ComplianceService {
             LOGGER.error("Error while sending milesone. " + e);
         }
     }
+
+    private void sendOriginCustomsClearedMessage(String shipmentNumber, String eventCode){
+        ShipmentEventModel model = new ShipmentEventModel();
+        model.setShipmentNumber(shipmentNumber);
+        model.setEventCode(eventCode);
+        model.setAction("CREATE");
+        model.setNotificationType("auto");
+        originCustomsClearedEventBean.sendNotificationToAudit(model);
+    }
+
+    private void sendDestinationCustomsClearedMessage(String shipmentNumber, String eventCode){
+        ShipmentEventModel model = new ShipmentEventModel();
+        model.setShipmentNumber(shipmentNumber);
+        model.setEventCode(eventCode);
+        model.setAction("CREATE");
+        model.setNotificationType("auto");
+        destinationCustomsClearedBean.sendNotificationToAudit(model);
+    }
+
+
 }
