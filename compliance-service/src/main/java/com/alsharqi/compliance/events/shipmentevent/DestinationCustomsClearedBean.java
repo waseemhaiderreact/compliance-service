@@ -1,5 +1,7 @@
 package com.alsharqi.compliance.events.shipmentevent;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.MessageChannel;
@@ -10,6 +12,9 @@ import org.springframework.stereotype.Component;
 public class DestinationCustomsClearedBean {
     private MessageChannel output;
 
+    private static final Logger LOGGER = LogManager.getLogger(DestinationCustomsClearedBean.class);
+
+
     @Autowired
     public DestinationCustomsClearedBean(@Qualifier("outBoundDestinationCustomsCleared") MessageChannel output) {
         this.output = output;
@@ -17,6 +22,10 @@ public class DestinationCustomsClearedBean {
 
     public void sendNotificationToAudit(ShipmentEventModel shipmentEventModel){
 
-        this.output.send(MessageBuilder.withPayload(shipmentEventModel).build());
+        try {
+            this.output.send(MessageBuilder.withPayload(shipmentEventModel).build());
+        } catch (Exception e) {
+            LOGGER.error("Error while sending destination customs cleared notification to audit",e);
+        }
     }
 }
