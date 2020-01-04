@@ -1995,21 +1995,31 @@ public class ComplianceService {
     }
 
     private void sendOriginCustomsClearedMessage(String shipmentNumber, String eventCode){
-        ShipmentEventModel model = new ShipmentEventModel();
-        model.setShipmentNumber(shipmentNumber);
-        model.setEventCode(eventCode);
-        model.setAction("CREATE");
-        model.setNotificationType("auto");
-        originCustomsClearedEventBean.sendNotificationToAudit(model);
+
+
+        try {
+            ShipmentEventModel model = new ShipmentEventModel();
+            model.setShipmentNumber(shipmentNumber);
+            model.setEventCode(eventCode);
+            model.setAction("CREATE");
+            model.setNotificationType("auto");
+            originCustomsClearedEventBean.sendNotificationToAudit(model);
+        } catch (Exception e) {
+            LOGGER.error("Failed to send notification to audit service", e);
+        }
     }
 
     private void sendDestinationCustomsClearedMessage(String shipmentNumber, String eventCode){
-        ShipmentEventModel model = new ShipmentEventModel();
-        model.setShipmentNumber(shipmentNumber);
-        model.setEventCode(eventCode);
-        model.setAction("CREATE");
-        model.setNotificationType("auto");
-        destinationCustomsClearedBean.sendNotificationToAudit(model);
+        try {
+            ShipmentEventModel model = new ShipmentEventModel();
+            model.setShipmentNumber(shipmentNumber);
+            model.setEventCode(eventCode);
+            model.setAction("CREATE");
+            model.setNotificationType("auto");
+            destinationCustomsClearedBean.sendNotificationToAudit(model);
+        } catch (Exception e) {
+            LOGGER.error("Failed to send notification to audit service", e);
+        }
     }
 
 
