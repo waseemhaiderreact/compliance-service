@@ -40,7 +40,7 @@ war {
 
 configurations {
 	providedRuntime
-
+	all*.exclude module: 'spring-boot-starter-logging'
 }
 
 dependencies {
@@ -72,6 +72,11 @@ dependencies {
 	compile('org.liquibase:liquibase-core:3.4.1')
 	//Aws
 	compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.133'
+
+	//Log4j
+	compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
+	compile group: 'org.apache.logging.log4j', name: 'log4j-web', version: '2.11.1'
+	compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
 }
 
 dependencyManagement {
