@@ -27,7 +27,28 @@ repositories {
 	mavenCentral()
 }
 
+//Create Jar with the following manifest
 
+jar {
+	enabled=true
+	doFirst {
+		manifest {
+			if (!configurations.compile.isEmpty()) {
+				attributes(
+						'Main-Class': 'com.alsharqi.compliance.ComplianceServiceApplication',
+						'Class-Path': configurations.compile.collect{"lib/$it.name"}.join(' '))
+
+			}
+		}
+	}
+}
+
+//Create lib folder containing dependencies i.e jars
+
+task copyToLib(type: Copy) {
+	into "$buildDir/libs/lib"
+	from configurations.compile
+}
 
 
 war {
