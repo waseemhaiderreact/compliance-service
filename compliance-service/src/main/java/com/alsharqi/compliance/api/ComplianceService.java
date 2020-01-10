@@ -41,7 +41,7 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
-import org.apache.log4j.LogManager;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -68,7 +68,7 @@ import java.util.*;
 
 import static com.alsharqi.compliance.util.Constant.ALSHARQI;
 import static com.alsharqi.compliance.util.Constant.QAFILA;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 @Service
 public class ComplianceService {
