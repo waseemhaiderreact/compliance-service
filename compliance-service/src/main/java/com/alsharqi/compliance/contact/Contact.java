@@ -20,17 +20,17 @@ public class Contact {
     private String phone;
     private String authority;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
-    private Set<Compliance> user = new HashSet<Compliance>();
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+//    private Set<Compliance> user = new HashSet<Compliance>();
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "issuingAuthority",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
-    private Set<Compliance> issuingAuthorities = new HashSet<Compliance>();
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "issuingAuthority",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+//    private Set<Compliance> issuingAuthorities = new HashSet<Compliance>();
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "vendor",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
-    private Set<Compliance> vendors = new HashSet<Compliance>();
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "vendor",cascade = { CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+//    private Set<Compliance> vendors = new HashSet<Compliance>();
 
     public Long getId() {
         return id;
@@ -72,29 +72,29 @@ public class Contact {
         this.phone = phone;
     }
 
-    public Set<Compliance> getUser() {
-        return user;
-    }
-
-    public void setUser(Set<Compliance> user) {
-        this.user = user;
-    }
-
-    public Set<Compliance> getIssuingAuthorities() {
-        return issuingAuthorities;
-    }
-
-    public void setIssuingAuthorities(Set<Compliance> issuingAuthorities) {
-        this.issuingAuthorities = issuingAuthorities;
-    }
-
-    public Set<Compliance> getVendors() {
-        return vendors;
-    }
-
-    public void setVendors(Set<Compliance> vendors) {
-        this.vendors = vendors;
-    }
+//    public Set<Compliance> getUser() {
+//        return user;
+//    }
+//
+//    public void setUser(Set<Compliance> user) {
+//        this.user = user;
+//    }
+//
+//    public Set<Compliance> getIssuingAuthorities() {
+//        return issuingAuthorities;
+//    }
+//
+//    public void setIssuingAuthorities(Set<Compliance> issuingAuthorities) {
+//        this.issuingAuthorities = issuingAuthorities;
+//    }
+//
+//    public Set<Compliance> getVendors() {
+//        return vendors;
+//    }
+//
+//    public void setVendors(Set<Compliance> vendors) {
+//        this.vendors = vendors;
+//    }
 
     public String getAuthority() {
         return authority;
