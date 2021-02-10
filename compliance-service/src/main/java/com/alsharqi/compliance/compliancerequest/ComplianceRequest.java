@@ -33,8 +33,8 @@ public class ComplianceRequest {
     private String s3Key;
     private String countryCode;
 
-    @OneToMany(mappedBy="complianceRequest",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
-    private Set<Compliance> compliances=new HashSet<Compliance>();
+//    @OneToMany(mappedBy="complianceRequest",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+//    private Set<Compliance> compliances=new HashSet<Compliance>();
 
     @Transient
     private Location headOffice;
@@ -119,13 +119,13 @@ public class ComplianceRequest {
         this.organizationId = organizationId;
     }
 
-    public Set<Compliance> getCompliances() {
-        return compliances;
-    }
-
-    public void setCompliances(Set<Compliance> compliances) {
-        this.compliances = compliances;
-    }
+//    public Set<Compliance> getCompliances() {
+//        return compliances;
+//    }
+//
+//    public void setCompliances(Set<Compliance> compliances) {
+//        this.compliances = compliances;
+//    }
 
     public Location getHeadOffice() {
         return headOffice;
