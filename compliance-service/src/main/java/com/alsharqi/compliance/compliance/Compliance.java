@@ -36,15 +36,18 @@ public class Compliance {
     private Integer version;
     private String username;
     private String additionalComments;
+    private String documentType;
+
     //constructors
     public Compliance() {
     }
 
-    public Compliance(String typeOfCompliance, String statusOfCompliance, String statusOfCustomer, String shipmentNumber,
-                      String customer, String subsidiary, String location, String squad, Boolean visibleToCustomer,
-                      String complianceNumber, String issuingAuthority, String issuingAuthorityLocation, String country,
-                      String dueDate, String comments, String agentAssigned, Integer active, Integer version,
-                      String username, String additionalComments) {
+    public Compliance(String typeOfCompliance, String statusOfCompliance, String statusOfCustomer,
+                      String shipmentNumber, String customer, String subsidiary, String location, String squad,
+                      Boolean visibleToCustomer, String complianceNumber, String issuingAuthority,
+                      String issuingAuthorityLocation, String country, String dueDate, String comments,
+                      String agentAssigned, Integer active, Integer version, String username,
+                      String additionalComments, String documentType) {
         this.typeOfCompliance = typeOfCompliance;
         this.statusOfCompliance = statusOfCompliance;
         this.statusOfCustomer = statusOfCustomer;
@@ -65,6 +68,7 @@ public class Compliance {
         this.version = version;
         this.username = username;
         this.additionalComments = additionalComments;
+        this.documentType = documentType;
     }
 
     //getters and setters
@@ -236,7 +240,14 @@ public class Compliance {
         this.additionalComments = additionalComments;
     }
 
-    //getters and setters
+    public String getDocumentType() {
+        return documentType;
+    }
+
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
+    }
+//getters and setters
 
 //    private String type;
 //    private String status;
