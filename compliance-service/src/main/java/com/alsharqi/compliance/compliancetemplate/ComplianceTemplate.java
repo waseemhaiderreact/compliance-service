@@ -9,6 +9,7 @@ public class ComplianceTemplate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String templateName;
     private String typeOfCompliance;
     private String statusOfCompliance;
     private String statusOfCustomer;
@@ -67,6 +68,22 @@ public class ComplianceTemplate {
         this.country = country;
         this.dueDate = dueDate;
         this.comments = comments;
+    }
+
+    public ComplianceTemplate(String templateName, String typeOfCompliance, String statusOfCompliance,
+                              String statusOfCustomer, Boolean visibleToCustomer, String issuingAuthority,
+                              String issuingAuthorityLocation, String country, String dueDate, String comments){
+        this.templateName = templateName;
+        this.typeOfCompliance = typeOfCompliance;
+        this.statusOfCompliance = statusOfCompliance;
+        this.statusOfCustomer = statusOfCustomer;
+        this.visibleToCustomer = visibleToCustomer;
+        this.issuingAuthority = issuingAuthority;
+        this.issuingAuthorityLocation = issuingAuthorityLocation;
+        this.country = country;
+        this.dueDate = dueDate;
+        this.comments = comments;
+
     }
 
     //getters and setters
@@ -164,5 +181,13 @@ public class ComplianceTemplate {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public String getTemplateName() {
+        return templateName;
+    }
+
+    public void setTemplateName(String templateName) {
+        this.templateName = templateName;
     }
 }

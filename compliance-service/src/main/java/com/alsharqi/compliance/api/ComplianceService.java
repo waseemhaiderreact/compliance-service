@@ -317,7 +317,7 @@ public class ComplianceService {
     }
 
     //saving a compliance using the mapper class
-    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).CREATE)")
+    //@PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).CREATE)")
     ResponseEntity<?> saveComplianceMapper(Compliance request, List<MultipartFile> complianceDocument,String username){
         ResponseEntity responseEntity = null;
         try{
@@ -378,10 +378,14 @@ public class ComplianceService {
             }
             //getting the shipment number from compliance
             Compliance compliance = complianceRepository.findOne(id);
-            body.add("username",username);  //person who is uploading the documents
-            body.add("shipmentNumber",compliance.getShipmentNumber());
-            body.add("referenceNumber",compliance.getComplianceNumber());
             body.add("viewable",compliance.getVisibleToCustomer());
+            body.add("documentType",compliance.getDocumentType());
+            body.add("referenceNumber",compliance.getComplianceNumber());
+            body.add("shipmentNumber",compliance.getShipmentNumber());
+            body.add("username",username);  //person who is uploading the documents
+
+
+
             HttpEntity<MultiValueMap<String,Object>> httpEntity = new HttpEntity<>(body,headers);
             RestTemplate restTemplate = new RestTemplate();
             responseEntity = restTemplate.postForEntity(url,httpEntity,MultipleFileUploadPOSTResponse[].class);
