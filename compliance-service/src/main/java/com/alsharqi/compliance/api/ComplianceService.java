@@ -170,7 +170,7 @@ public class ComplianceService {
             compliance.setActive(1);
             compliance.setVersion(1);
             AuditTrail auditTrail = new
-                    AuditTrail(compliance.getComplianceNumber(),compliance.getStatusOfCompliance(),compliance.getStatusOfCustomer(),compliance.getUsername());
+                    AuditTrail(compliance.getShipmentNumber(),compliance.getStatusOfCompliance(),compliance.getStatusOfCustomer(),compliance.getUsername());
             LocalDate localDate = LocalDate.now();
             Date date = java.sql.Date.valueOf(localDate);
             auditTrail.setLastUpdated(date);
@@ -180,6 +180,8 @@ public class ComplianceService {
             LOGGER.info("cannot save a compliance ",e);
             responseEntity = new ResponseEntity<>("Cannot save a compliance", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        /*Sending a compliance to the search service*/
+        kafkaAsynService.sendCompliance(compliance);
         return responseEntity;
     }
 
@@ -213,14 +215,15 @@ public class ComplianceService {
     public Compliance changeVersion(Compliance compliance){
         List<Compliance> compliances = complianceRepository.findAll();
         Long id = compliances.get(compliances.size()-1).getId()+1;
-        Compliance previousCompliance = complianceRepository.findOne(compliance.getId());
+
+        Compliance previousCompliance = complianceRepository.findComplianceById(compliance.getId());
         previousCompliance.setActive(0);
         compliance.setVersion(previousCompliance.getVersion()+1);
         compliance.setActive(1);
         this.saveUpdatedCompliance(previousCompliance);
         compliance.setId(id);
         AuditTrail auditTrail = new
-                AuditTrail(compliance.getComplianceNumber(),compliance.getStatusOfCompliance(),compliance.getStatusOfCustomer(),compliance.getUsername());
+                AuditTrail(compliance.getShipmentNumber(),compliance.getStatusOfCompliance(),compliance.getStatusOfCustomer(),compliance.getUsername());
         LocalDate localDate = LocalDate.now();
         Date date = java.sql.Date.valueOf(localDate);
         auditTrail.setLastUpdated(date);
@@ -268,7 +271,7 @@ public class ComplianceService {
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("getting a compliance template of id ",id);
-            responseEntity = new ResponseEntity<>(complianceTemplateRepository.findOne(id), HttpStatus.OK);
+            responseEntity = new ResponseEntity<>(complianceTemplateRepository.findComplianceTemplateById(id), HttpStatus.OK);
         }catch (Exception e){
             LOGGER.info("cannot get a compliance template",e);
             responseEntity = new ResponseEntity<>("Cannot get a compliance template", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -308,7 +311,7 @@ public class ComplianceService {
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("getting a compliance of id",id);
-            responseEntity = new ResponseEntity<>(complianceRepository.findOne(id), HttpStatus.OK);
+            responseEntity = new ResponseEntity<>(complianceRepository.findComplianceById(id), HttpStatus.OK);
         }catch (Exception e){
             LOGGER.info("cannot save a compliance ",e);
             responseEntity = new ResponseEntity<>("Cannot get a compliance", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -326,12 +329,14 @@ public class ComplianceService {
             request.setVersion(1);
             request.setUsername(username);
             AuditTrail auditTrail = new
-                    AuditTrail(request.getComplianceNumber(),request.getStatusOfCompliance(),request.getStatusOfCustomer(),request.getUsername());
+                    AuditTrail(request.getShipmentNumber(),request.getStatusOfCompliance(),request.getStatusOfCustomer(),request.getUsername());
             LocalDate localDate = LocalDate.now();
             Date date = java.sql.Date.valueOf(localDate);
             auditTrail.setLastUpdated(date);
             auditTrailRepository.save(auditTrail);
             Compliance compliance = complianceRepository.save(request);
+            /*Sending a compliance to the search service*/
+            kafkaAsynService.sendCompliance(compliance);
             if(compliance!=null){
                 List<MultipleFileUploadPOSTResponse> list=uploadMultipleCompliancesDocuments(complianceDocument,compliance.getId(),username);
                 if(list.size()>0)
@@ -354,6 +359,7 @@ public class ComplianceService {
             LOGGER.info("cannot save a compliance using mapper",e);
             responseEntity = new ResponseEntity<>("Cannot save a compliance using mapper", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
         return responseEntity;
     }
 
@@ -377,15 +383,12 @@ public class ComplianceService {
                 body.add("files",new FileSystemResource(convert(complianceDocument.get(i))));
             }
             //getting the shipment number from compliance
-            Compliance compliance = complianceRepository.findOne(id);
+            Compliance compliance = complianceRepository.findComplianceById(id);
             body.add("viewable",compliance.getVisibleToCustomer());
             body.add("documentType",compliance.getDocumentType());
             body.add("referenceNumber",compliance.getComplianceNumber());
             body.add("shipmentNumber",compliance.getShipmentNumber());
             body.add("username",username);  //person who is uploading the documents
-
-
-
             HttpEntity<MultiValueMap<String,Object>> httpEntity = new HttpEntity<>(body,headers);
             RestTemplate restTemplate = new RestTemplate();
             responseEntity = restTemplate.postForEntity(url,httpEntity,MultipleFileUploadPOSTResponse[].class);
@@ -1455,20 +1458,20 @@ public class ComplianceService {
 
 
     //This function gets a contact list and if any if it has an id null, an id is generated
-    @Transactional
-    public void persistContacts(List<Contact> contacts){
-
-        for(Contact eachContact:contacts){
-
-            if(eachContact.getId()==null){
-                eachContact.setId(generateLongNumber());
-            }
-        }
-
-        contactRepository.save(contacts);
-        contactRepository.flush();
-
-    }
+//    @Transactional
+//    public void persistContacts(List<Contact> contacts){
+//
+//        for(Contact eachContact:contacts){
+//
+//            if(eachContact.getId()==null){
+//                eachContact.setId(generateLongNumber());
+//            }
+//        }
+//
+//        contactRepository.save(contacts);
+//        contactRepository.flush();
+//
+//    }
 
     public EditComplianceRecordRequest updateCompliance(EditComplianceRecordRequest compliance, List<MultipartFile> multipartFile) {
 
@@ -1870,26 +1873,26 @@ public class ComplianceService {
 //        }
 //    }
 
-    public Set<Compliance> addComplianceSet(Set<Compliance> complianceSet) {
-        try {
-            complianceRepository.save(complianceSet);
-
-            Iterator<Compliance> complianceIterator = complianceSet.iterator();
-            while (complianceIterator.hasNext()) {
-
-                Compliance compliance = complianceIterator.next();
-                if (compliance.getComplianceNumber() == null) {
-                    compliance.setComplianceNumber(getComplianceNumber(compliance.getId()));
-                }
-
-            }
-            complianceRepository.save(complianceSet);
-
-            return complianceSet;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+//    public Set<Compliance> addComplianceSet(Set<Compliance> complianceSet) {
+//        try {
+//            complianceRepository.save(complianceSet);
+//
+//            Iterator<Compliance> complianceIterator = complianceSet.iterator();
+//            while (complianceIterator.hasNext()) {
+//
+//                Compliance compliance = complianceIterator.next();
+//                if (compliance.getComplianceNumber() == null) {
+//                    compliance.setComplianceNumber(getComplianceNumber(compliance.getId()));
+//                }
+//
+//            }
+//            complianceRepository.save(complianceSet);
+//
+//            return complianceSet;
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
 
     /*
      * Q418-1.2 #757

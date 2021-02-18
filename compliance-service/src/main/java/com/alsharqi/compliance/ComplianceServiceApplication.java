@@ -5,7 +5,7 @@ import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.support.SpringBootServletInitializer;
+//import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
@@ -21,16 +21,16 @@ import java.util.TimeZone;
 @SpringBootApplication
 @EnableResourceServer
 @EnableBinding(CustomChannels.class)
-public class ComplianceServiceApplication extends SpringBootServletInitializer {
+public class ComplianceServiceApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ComplianceServiceApplication.class, args);
 	}
 
-	@Override
-	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(ComplianceServiceApplication.class);
-	}
+//	@Override
+//	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+//		return application.sources(ComplianceServiceApplication.class);
+//	}
 
 	private static SpringApplicationBuilder configureApplication(SpringApplicationBuilder builder) {
 		return builder.sources(SpringApplicationBuilder.class).bannerMode(Banner.Mode.OFF);

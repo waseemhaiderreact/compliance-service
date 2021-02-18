@@ -13,6 +13,7 @@ import java.util.List;
 
 @Repository
 public interface ComplianceRepository extends JpaRepository<Compliance,Long> {
+    Compliance findComplianceById(Long id);
 //    public Page<Compliance> findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(Date sDate, Date eDate, String status, Pageable page);
 //    public Page<Compliance> findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(Date sDate,Date eDate,Pageable page);
 //
