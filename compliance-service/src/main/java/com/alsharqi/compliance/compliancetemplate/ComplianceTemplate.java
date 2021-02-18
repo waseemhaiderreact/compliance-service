@@ -1,6 +1,10 @@
 package com.alsharqi.compliance.compliancetemplate;
 
+import com.alsharqi.compliance.issuingauthority.IssuingAuthority;
+
 import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Set;
 
 @Entity
 @Table(name="t_complianceTemplate")
@@ -11,70 +15,38 @@ public class ComplianceTemplate {
 
     private String templateName;
     private String typeOfCompliance;
+    private String complianceName;
+    private String complianceShortCode;
     private String statusOfCompliance;
     private String statusOfCustomer;
     private Boolean visibleToCustomer;
     private String issuingAuthority;
     private String issuingAuthorityLocation;
     private String country;
-    private String dueDate;
+    private Long dueDate;
+    private String dueDateInputUnit;
     private String comments;
     private Integer active;
     private Integer version;
+
+    @OneToMany(targetEntity = IssuingAuthority.class, fetch = FetchType.EAGER,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name="complianceTemplate_id",referencedColumnName = "id")
+    private Set<IssuingAuthority> issuingAuthorities;
 
     //constructors
     public ComplianceTemplate() {
     }
 
-    public ComplianceTemplate(String typeOfCompliance, String statusOfCompliance, String statusOfCustomer,
+    public ComplianceTemplate(String templateName, String typeOfCompliance, String complianceName,
+                              String complianceShortCode, String statusOfCompliance, String statusOfCustomer,
                               Boolean visibleToCustomer, String issuingAuthority, String issuingAuthorityLocation,
-                              String country, String dueDate, String comments, Integer active, Integer version) {
-        this.typeOfCompliance = typeOfCompliance;
-        this.statusOfCompliance = statusOfCompliance;
-        this.statusOfCustomer = statusOfCustomer;
-        this.visibleToCustomer = visibleToCustomer;
-        this.issuingAuthority = issuingAuthority;
-        this.issuingAuthorityLocation = issuingAuthorityLocation;
-        this.country = country;
-        this.dueDate = dueDate;
-        this.comments = comments;
-        this.active = active;
-        this.version = version;
-    }
-
-    public ComplianceTemplate(String typeOfCompliance, String statusOfCompliance, String statusOfCustomer,
-                              Boolean visibleToCustomer, String issuingAuthority, String issuingAuthorityLocation,
-                              String country, String dueDate, String comments) {
-        this.typeOfCompliance = typeOfCompliance;
-        this.statusOfCompliance = statusOfCompliance;
-        this.statusOfCustomer = statusOfCustomer;
-        this.visibleToCustomer = visibleToCustomer;
-        this.issuingAuthority = issuingAuthority;
-        this.issuingAuthorityLocation = issuingAuthorityLocation;
-        this.country = country;
-        this.dueDate = dueDate;
-        this.comments = comments;
-    }
-
-    public ComplianceTemplate(Long id, String typeOfCompliance, String statusOfCustomer, Boolean visibleToCustomer,
-                              String issuingAuthority, String issuingAuthorityLocation,
-                              String country, String dueDate, String comments) {
-        this.id = id;
-        this.typeOfCompliance = typeOfCompliance;
-        this.statusOfCustomer = statusOfCustomer;
-        this.visibleToCustomer = visibleToCustomer;
-        this.issuingAuthority = issuingAuthority;
-        this.issuingAuthorityLocation = issuingAuthorityLocation;
-        this.country = country;
-        this.dueDate = dueDate;
-        this.comments = comments;
-    }
-
-    public ComplianceTemplate(String templateName, String typeOfCompliance, String statusOfCompliance,
-                              String statusOfCustomer, Boolean visibleToCustomer, String issuingAuthority,
-                              String issuingAuthorityLocation, String country, String dueDate, String comments){
+                              String country, Long dueDate, String dueDateInputUnit, String comments,
+                              Set<IssuingAuthority> issuingAuthorities) {
         this.templateName = templateName;
         this.typeOfCompliance = typeOfCompliance;
+        this.complianceName = complianceName;
+        this.complianceShortCode = complianceShortCode;
         this.statusOfCompliance = statusOfCompliance;
         this.statusOfCustomer = statusOfCustomer;
         this.visibleToCustomer = visibleToCustomer;
@@ -82,8 +54,9 @@ public class ComplianceTemplate {
         this.issuingAuthorityLocation = issuingAuthorityLocation;
         this.country = country;
         this.dueDate = dueDate;
+        this.dueDateInputUnit = dueDateInputUnit;
         this.comments = comments;
-
+        this.issuingAuthorities = issuingAuthorities;
     }
 
     //getters and setters
@@ -143,14 +116,6 @@ public class ComplianceTemplate {
         this.country = country;
     }
 
-    public String getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(String dueDate) {
-        this.dueDate = dueDate;
-    }
-
     public String getComments() {
         return comments;
     }
@@ -189,5 +154,45 @@ public class ComplianceTemplate {
 
     public void setTemplateName(String templateName) {
         this.templateName = templateName;
+    }
+
+    public String getComplianceName() {
+        return complianceName;
+    }
+
+    public void setComplianceName(String complianceName) {
+        this.complianceName = complianceName;
+    }
+
+    public String getComplianceShortCode() {
+        return complianceShortCode;
+    }
+
+    public void setComplianceShortCode(String complianceShortCode) {
+        this.complianceShortCode = complianceShortCode;
+    }
+
+    public Set<IssuingAuthority> getIssuingAuthorities() {
+        return issuingAuthorities;
+    }
+
+    public void setIssuingAuthorities(Set<IssuingAuthority> issuingAuthorities) {
+        this.issuingAuthorities = issuingAuthorities;
+    }
+
+    public Long getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Long dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public String getDueDateInputUnit() {
+        return dueDateInputUnit;
+    }
+
+    public void setDueDateInputUnit(String dueDateInputUnit) {
+        this.dueDateInputUnit = dueDateInputUnit;
     }
 }

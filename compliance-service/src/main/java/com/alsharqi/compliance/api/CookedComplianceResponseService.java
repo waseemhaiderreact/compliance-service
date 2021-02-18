@@ -68,11 +68,11 @@ public class CookedComplianceResponseService {
         Pageable pageable  = new PageRequest(page, size, null);
         List<String> fieldNames = new ArrayList<>();
         try {
+            fieldNames.add("templateName");
             fieldNames.add("typeOfCompliance");
-            fieldNames.add("country");
-            fieldNames.add("issuingAuthority");
-            fieldNames.add("issuingAuthorityLocation");
-
+            fieldNames.add("complianceName");
+            fieldNames.add("complianceShortCode");
+            fieldNames.add("visibleToCustomer");
         }
         catch (Exception e){
             LOGGER.error("Exception occurred while fetching Compliances template List (get table) Input Parameters= "+inputParam, e);

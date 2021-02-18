@@ -1,21 +1,22 @@
 package com.alsharqi.compliance.events.compliance;
 
 
+import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.notification.Notification;
 
 public class ComplianceModel {
     private String action;
-    private ComplianceRequest complianceRequest;
+    private Compliance compliance;
 
     ComplianceModel() {
         super();
     }
 
-    public ComplianceModel(String action, ComplianceRequest complianceRequest) {
+    public ComplianceModel(String action, Compliance compliance) {
         super();
         this.action = action;
-        this.complianceRequest = complianceRequest;
+        this.compliance = compliance;
     }
 
     public String getAction() {
@@ -26,11 +27,11 @@ public class ComplianceModel {
         this.action = action;
     }
 
-    public ComplianceRequest getComplianceRequest() {
-        return complianceRequest;
+    public Compliance getCompliance() {
+        return compliance;
     }
 
-    public void setComplianceRequest(ComplianceRequest complianceRequest) {
-        this.complianceRequest = complianceRequest;
+    public void setCompliance(Compliance compliance) {
+        this.compliance = compliance;
     }
 }

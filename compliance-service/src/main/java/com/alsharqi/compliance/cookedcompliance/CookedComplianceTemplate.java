@@ -8,32 +8,33 @@ public class CookedComplianceTemplate {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String templateName;
     private String typeOfCompliance;
-    private String country;
-
-    private String issuingAuthority;
-    private String issuingAuthorityLocation;
+    private String complianceName;
+    private String complianceShortCode;
+    private Boolean visibleToCustomer;
 
     //constructors
     public CookedComplianceTemplate() {
     }
 
-    public CookedComplianceTemplate(String typeOfCompliance, String country,
-                                    String issuingAuthority, String issuingAuthorityLocation) {
+    public CookedComplianceTemplate(String templateName, String typeOfCompliance, String complianceName,
+                                    String complianceShortCode, Boolean visibleToCustomer) {
+        this.templateName = templateName;
         this.typeOfCompliance = typeOfCompliance;
-        this.country = country;
-        this.issuingAuthority = issuingAuthority;
-        this.issuingAuthorityLocation = issuingAuthorityLocation;
+        this.complianceName = complianceName;
+        this.complianceShortCode = complianceShortCode;
+        this.visibleToCustomer = visibleToCustomer;
     }
 
-    public CookedComplianceTemplate(Long id, String typeOfCompliance, String country,
-                                    String issuingAuthority, String issuingAuthorityLocation) {
+    public CookedComplianceTemplate(Long id, String templateName, String typeOfCompliance, String complianceName,
+                                    String complianceShortCode, Boolean visibleToCustomer) {
         this.id = id;
+        this.templateName = templateName;
         this.typeOfCompliance = typeOfCompliance;
-        this.country = country;
-        this.issuingAuthority = issuingAuthority;
-        this.issuingAuthorityLocation = issuingAuthorityLocation;
+        this.complianceName = complianceName;
+        this.complianceShortCode = complianceShortCode;
+        this.visibleToCustomer = visibleToCustomer;
     }
 
     //getters and setters
@@ -53,27 +54,35 @@ public class CookedComplianceTemplate {
         this.typeOfCompliance = typeOfCompliance;
     }
 
-    public String getCountry() {
-        return country;
+    public String getTemplateName() {
+        return templateName;
     }
 
-    public void setCountry(String statusOfCustomer) {
-        this.country = statusOfCustomer;
+    public void setTemplateName(String templateName) {
+        this.templateName = templateName;
     }
 
-    public String getIssuingAuthority() {
-        return issuingAuthority;
+    public String getComplianceName() {
+        return complianceName;
     }
 
-    public void setIssuingAuthority(String issuingAuthority) {
-        this.issuingAuthority = issuingAuthority;
+    public void setComplianceName(String complianceName) {
+        this.complianceName = complianceName;
     }
 
-    public String getIssuingAuthorityLocation() {
-        return issuingAuthorityLocation;
+    public String getComplianceShortCode() {
+        return complianceShortCode;
     }
 
-    public void setIssuingAuthorityLocation(String issuingAuthorityLocation) {
-        this.issuingAuthorityLocation = issuingAuthorityLocation;
+    public void setComplianceShortCode(String complianceShortCode) {
+        this.complianceShortCode = complianceShortCode;
+    }
+
+    public Boolean getVisibleToCustomer() {
+        return visibleToCustomer;
+    }
+
+    public void setVisibleToCustomer(Boolean visibleToCustomer) {
+        this.visibleToCustomer = visibleToCustomer;
     }
 }

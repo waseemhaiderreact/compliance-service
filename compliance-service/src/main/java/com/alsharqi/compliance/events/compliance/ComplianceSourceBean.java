@@ -16,7 +16,7 @@ public class ComplianceSourceBean {
     }
 
     public void publishCompliance(ComplianceModel compliance){
-        System.out.println("Sending Compliance Request");
+        System.out.println("Sending Compliance for search-service");
         this.output.send(MessageBuilder.withPayload(compliance).build());
     }
 }

@@ -196,8 +196,8 @@ public class ComplianceTemplateCriteriaRepository implements ComplianceTemplateC
 
 
             criteriaQuery.where(criteriaBuilder.or(predicatesOr.toArray(new Predicate[0])));
-            criteriaQuery.select(criteriaBuilder.construct(CookedComplianceTemplate.class,bundleRequestRoot.get("id"), bundleRequestRoot.get("typeOfCompliance"), bundleRequestRoot.get("country"),
-                    bundleRequestRoot.get("issuingAuthority") ,bundleRequestRoot.get("issuingAuthorityLocation")));
+            criteriaQuery.select(criteriaBuilder.construct(CookedComplianceTemplate.class,bundleRequestRoot.get("id"), bundleRequestRoot.get("templateName"), bundleRequestRoot.get("typeOfCompliance"),
+                    bundleRequestRoot.get("complianceName") ,bundleRequestRoot.get("complianceShortCode"), bundleRequestRoot.get("visibleToCustomer")));
 
             if(sortOrder.equalsIgnoreCase("asc")){
                 criteriaQuery.orderBy(criteriaBuilder.asc(bundleRequestRoot.get(sortByField)));
