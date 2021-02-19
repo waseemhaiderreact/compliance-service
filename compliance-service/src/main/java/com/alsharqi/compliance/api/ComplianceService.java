@@ -199,11 +199,14 @@ public class ComplianceService {
     }
 
     //updating a compliance and its audit trail
+    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).EDIT)")
     ResponseEntity<?> updateCompliance(Compliance compliance){
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("updating a compliance ");
             compliance = changeVersion(compliance);
+            /*Sending a compliance to the search service*/
+            kafkaAsynService.sendCompliance(compliance);
             responseEntity = new ResponseEntity<>(complianceRepository.save(compliance), HttpStatus.OK);
         }catch (Exception e){
             LOGGER.info("cannot update a compliance ",e);
@@ -235,36 +238,6 @@ public class ComplianceService {
     public void saveUpdatedCompliance(Compliance compliance){
         complianceRepository.save(compliance);
     }
-
-//    //incase a declaration is updated
-//    @org.springframework.transaction.annotation.Transactional
-//    public Declaration saveUpdatedDeclaration(Declaration declaration){
-//        AuditTrail auditTrail =
-//                new AuditTrail(declaration.getDeclarationNumber(),declaration.getCreationDate(),
-//                        declaration.getDeclarationState(),declaration.getCreatedBy(),
-//                        declaration.getSubmittedBy(),declaration.getApprovedBy());
-//        this.saveAuditTrail(auditTrail);
-//        return  declarationRepository.save(declaration);
-//    }
-
-//    public Declaration changeVersion(Declaration declaration){
-//        List<Declaration> declarations = declarationRepository.findAll();
-//        Long id = declarations.get(declarations.size()-1).getId()+1;
-//
-//        Declaration previousDeclaration = findDeclarationById(declaration.getId());
-//        previousDeclaration.setActive(0);
-//        declaration.setVersion(previousDeclaration.getVersion()+1);
-//        declaration.setActive(1);
-//        this.saveUpdatedDeclaration(previousDeclaration);
-//
-//        declaration.setId(id);
-//        AuditTrail auditTrail =
-//                new AuditTrail(declaration.getDeclarationNumber(),declaration.getCreationDate(),
-//                        declaration.getDeclarationState(),declaration.getCreatedBy(),
-//                        declaration.getSubmittedBy(),declaration.getApprovedBy());
-//        this.saveAuditTrail(auditTrail);
-//        return declaration;
-//    }
 
     //getting a compliance template based on its id
     ResponseEntity<?> getComplianceTemplateById(Long id){
@@ -307,6 +280,7 @@ public class ComplianceService {
 
     @Transactional
     //getting a compliance based on its id
+    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).READ)")
     ResponseEntity<?> getComplianceById(Long id){
         ResponseEntity responseEntity = null;
         try{
@@ -320,7 +294,7 @@ public class ComplianceService {
     }
 
     //saving a compliance using the mapper class
-    //@PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).CREATE)")
+    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).CREATE)")
     ResponseEntity<?> saveComplianceMapper(Compliance request, List<MultipartFile> complianceDocument,String username){
         ResponseEntity responseEntity = null;
         try{
