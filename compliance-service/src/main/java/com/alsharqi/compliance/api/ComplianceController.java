@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -167,7 +168,12 @@ public class ComplianceController {
         try{
             LOGGER.info("Fetching a compliance based on its id ",complianceId);
             responseEntity = new ResponseEntity<>(complianceService.getComplianceById(complianceId),HttpStatus.OK);
-        }catch (Exception e) {
+        }
+        catch (AccessDeniedException aed){
+            LOGGER.error("Access denied due to privilege not available");
+            throw aed;
+        }
+        catch (Exception e) {
             LOGGER.error("Cannot fetch a compliance with id " + complianceId, e);
             responseEntity = new ResponseEntity<>("Cannot get a compliance ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -213,7 +219,10 @@ public class ComplianceController {
             Compliance mapper=objectMapper.readValue(request,Compliance.class);
             LOGGER.info("Adding Compliance with compliance number : "+mapper.getComplianceNumber());
             responseEntity = new ResponseEntity<>(complianceService.saveComplianceMapper(mapper,complianceDocument,userName),HttpStatus.OK);
-
+        }
+        catch (AccessDeniedException aed){
+            LOGGER.error("Access denied due to privilege not available");
+            throw aed;
         }
         catch (Exception e){
             LOGGER.error("cannot save a mapper object",e);
@@ -245,7 +254,12 @@ public class ComplianceController {
         try {
             LOGGER.info("updating compliance with id",compliance.getId());
             responseEntity = new ResponseEntity(complianceService.updateCompliance(compliance),HttpStatus.OK);
-        }catch (Exception e){
+        }
+        catch (AccessDeniedException aed){
+            LOGGER.error("Access denied due to privilege not available");
+            throw aed;
+        }
+        catch (Exception e){
             LOGGER.error("Cannot update compliance template with id ",compliance.getId());
             responseEntity = new ResponseEntity("Could not update compliance template",HttpStatus.INTERNAL_SERVER_ERROR);
         }

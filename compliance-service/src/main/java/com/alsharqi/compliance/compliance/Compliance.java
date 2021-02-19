@@ -3,6 +3,7 @@ package com.alsharqi.compliance.compliance;
 import com.alsharqi.compliance.attachment.FileAttachments;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.contact.Contact;
+import com.alsharqi.compliance.issuingauthority.IssuingAuthority;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
@@ -25,11 +26,16 @@ public class Compliance {
     private String location;
     private String squad;
     private Boolean visibleToCustomer;
+    private String complianceName;
+    private String complianceShortCode;
+
     private String complianceNumber;
     private String issuingAuthority;
     private String issuingAuthorityLocation;
     private String country;
-    private String dueDate;
+    private Long dueDate;
+    private String dueDateInputUnit;
+
     private String comments;
     private String agentAssigned;
     private Integer active;
@@ -38,16 +44,21 @@ public class Compliance {
     private String additionalComments;
     private String documentType;
 
+    @OneToMany(targetEntity = IssuingAuthority.class, fetch = FetchType.EAGER,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name="compliance_id",referencedColumnName = "id")
+    private Set<IssuingAuthority> issuingAuthorities;
     //constructors
     public Compliance() {
     }
 
     public Compliance(String typeOfCompliance, String statusOfCompliance, String statusOfCustomer,
                       String shipmentNumber, String customer, String subsidiary, String location, String squad,
-                      Boolean visibleToCustomer, String complianceNumber, String issuingAuthority,
-                      String issuingAuthorityLocation, String country, String dueDate, String comments,
-                      String agentAssigned, Integer active, Integer version, String username,
-                      String additionalComments, String documentType) {
+                      Boolean visibleToCustomer, String complianceName, String complianceShortCode,
+                      String complianceNumber, String issuingAuthority, String issuingAuthorityLocation,
+                      String country, Long dueDate, String dueDateInputUnit, String comments, String agentAssigned,
+                      String username, String additionalComments, String documentType,
+                      Set<IssuingAuthority> issuingAuthorities) {
         this.typeOfCompliance = typeOfCompliance;
         this.statusOfCompliance = statusOfCompliance;
         this.statusOfCustomer = statusOfCustomer;
@@ -57,18 +68,20 @@ public class Compliance {
         this.location = location;
         this.squad = squad;
         this.visibleToCustomer = visibleToCustomer;
+        this.complianceName = complianceName;
+        this.complianceShortCode = complianceShortCode;
         this.complianceNumber = complianceNumber;
         this.issuingAuthority = issuingAuthority;
         this.issuingAuthorityLocation = issuingAuthorityLocation;
         this.country = country;
         this.dueDate = dueDate;
+        this.dueDateInputUnit = dueDateInputUnit;
         this.comments = comments;
         this.agentAssigned = agentAssigned;
-        this.active = active;
-        this.version = version;
         this.username = username;
         this.additionalComments = additionalComments;
         this.documentType = documentType;
+        this.issuingAuthorities = issuingAuthorities;
     }
 
     //getters and setters
@@ -176,14 +189,6 @@ public class Compliance {
         this.country = country;
     }
 
-    public String getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(String dueDate) {
-        this.dueDate = dueDate;
-    }
-
     public String getComments() {
         return comments;
     }
@@ -247,7 +252,47 @@ public class Compliance {
     public void setDocumentType(String documentType) {
         this.documentType = documentType;
     }
-//getters and setters
+
+    public Set<IssuingAuthority> getIssuingAuthorities() {
+        return issuingAuthorities;
+    }
+
+    public void setIssuingAuthorities(Set<IssuingAuthority> issuingAuthorities) {
+        this.issuingAuthorities = issuingAuthorities;
+    }
+
+    public String getComplianceName() {
+        return complianceName;
+    }
+
+    public void setComplianceName(String complianceName) {
+        this.complianceName = complianceName;
+    }
+
+    public String getComplianceShortCode() {
+        return complianceShortCode;
+    }
+
+    public void setComplianceShortCode(String complianceShortCode) {
+        this.complianceShortCode = complianceShortCode;
+    }
+
+    public Long getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Long dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public String getDueDateInputUnit() {
+        return dueDateInputUnit;
+    }
+
+    public void setDueDateInputUnit(String dueDateInputUnit) {
+        this.dueDateInputUnit = dueDateInputUnit;
+    }
+    //getters and setters
 
 //    private String type;
 //    private String status;
