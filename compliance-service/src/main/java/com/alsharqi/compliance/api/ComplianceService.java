@@ -29,6 +29,7 @@ import com.alsharqi.compliance.events.shipment.ShipmentSourceBean;
 import com.alsharqi.compliance.events.shipment.ShipmentStatus;
 
 import com.alsharqi.compliance.location.Location;
+import com.alsharqi.compliance.methodsecurity.PrivilegeHandler;
 import com.alsharqi.compliance.notification.Notification;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.organizationidclass.OrganizationIdCLass;
@@ -36,6 +37,8 @@ import com.alsharqi.compliance.request.EditComplianceRecordRequest;
 import com.alsharqi.compliance.response.ComplianceFileUploadResponse;
 import com.alsharqi.compliance.response.DefaultResponse;
 import com.alsharqi.compliance.response.MultipleFileUploadPOSTResponse;
+import com.alsharqi.compliance.security.Authorities;
+import com.alsharqi.compliance.util.AccessDeniedException;
 import com.alsharqi.compliance.util.ApplicationException;
 import com.alsharqi.compliance.util.Constant;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -58,14 +61,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+//import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.core.Authentication;
+//import org.springframework.security.core.context.SecurityContextHolder;
+//import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
@@ -162,6 +167,9 @@ public class ComplianceService {
     @Autowired
     private ShipmentSourceBean shipmentSourceBean;
 
+    @Autowired
+    private PrivilegeHandler privilegeHandler;
+
     //saving a compliance
     ResponseEntity<?> saveCompliance(Compliance compliance){
         ResponseEntity responseEntity = null;
@@ -199,8 +207,12 @@ public class ComplianceService {
     }
 
     //updating a compliance and its audit trail
-    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).EDIT)")
-    ResponseEntity<?> updateCompliance(Compliance compliance){
+//    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).EDIT)")
+    ResponseEntity<?> updateCompliance(Compliance compliance) throws AccessDeniedException {
+
+        if(!privilegeHandler.hasCompliancePrivilege(Authorities.Compliance.EDIT))
+            throw new AccessDeniedException();
+
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("updating a compliance ");
@@ -280,8 +292,12 @@ public class ComplianceService {
 
     @Transactional
     //getting a compliance based on its id
-    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).READ)")
-    ResponseEntity<?> getComplianceById(Long id){
+//    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).READ)")
+    ResponseEntity<?> getComplianceById(Long id) throws AccessDeniedException{
+
+        if(!privilegeHandler.hasCompliancePrivilege(Authorities.Compliance.READ))
+            throw new AccessDeniedException();
+
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("getting a compliance of id",id);
@@ -294,8 +310,12 @@ public class ComplianceService {
     }
 
     //saving a compliance using the mapper class
-    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).CREATE)")
-    ResponseEntity<?> saveComplianceMapper(Compliance request, List<MultipartFile> complianceDocument,String username){
+//    @PreAuthorize("@PrivilegeHandler.hasCompliancePrivilege(T(com.alsharqi.compliance.security.Authorities.Compliance).CREATE)")
+    ResponseEntity<?> saveComplianceMapper(Compliance request, List<MultipartFile> complianceDocument,String username) throws AccessDeniedException{
+
+        if(!privilegeHandler.hasCompliancePrivilege(Authorities.Compliance.CREATE))
+            throw new AccessDeniedException();
+
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("saving a compliance using mapper");
@@ -345,12 +365,13 @@ public class ComplianceService {
             /** Adding ID to the URL */
             //String url=addDocumenturl+"/3";
             String url=addDocumenturl+"/uploads/multiple/";
-            OAuth2AuthenticationDetails auth = (OAuth2AuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
-            String accessToken = auth.getTokenValue();
+//            OAuth2AuthenticationDetails auth = (OAuth2AuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
+//            String accessToken = auth.getTokenValue();
+            String accessToken = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest().getHeader("Authorization");
             //set token
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            headers.set("Authorization", "Bearer " + accessToken);
+            headers.set("Authorization",/* "Bearer " + */accessToken);
             MultiValueMap<String,Object> body=new LinkedMultiValueMap<>();
             for(int i=0;i<complianceDocument.size();i++)
             {

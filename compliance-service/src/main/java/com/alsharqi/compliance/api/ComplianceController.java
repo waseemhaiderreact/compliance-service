@@ -9,6 +9,7 @@ import com.alsharqi.compliance.compliancetemplate.ComplianceTemplate;
 import com.alsharqi.compliance.exception.EmptyEntityTableException;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.response.DefaultResponse;
+import com.alsharqi.compliance.util.AccessDeniedException;
 import com.alsharqi.compliance.util.ApplicationException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
+//import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -163,7 +164,7 @@ public class ComplianceController {
     //fetching a compliance based on its id
     @RequestMapping(value = "/record/{complianceId}", method = RequestMethod.GET)
     @ResponseBody
-    public ResponseEntity<?> getComplaincById(@PathVariable Long complianceId){
+    public ResponseEntity<?> getComplaincById(@PathVariable Long complianceId) throws AccessDeniedException{
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("Fetching a compliance based on its id ",complianceId);
@@ -211,7 +212,7 @@ public class ComplianceController {
     @ResponseBody
     ResponseEntity addCompliance(@RequestParam("complianceDocument") List<MultipartFile> complianceDocument,
                                             @RequestParam("compliances") String request,
-                                            @RequestParam("userName") String userName) {
+                                            @RequestParam("userName") String userName) throws AccessDeniedException {
         ResponseEntity responseEntity = null;
         try {
             LOGGER.info("adding a new compliance using object mapper");
@@ -249,7 +250,7 @@ public class ComplianceController {
     //editing a compliance and creating a n audit trail
     @RequestMapping(value = "/record/update", method = RequestMethod.PUT)
     @ResponseBody
-    public ResponseEntity<?> updateCompliance(@RequestBody Compliance compliance){
+    public ResponseEntity<?> updateCompliance(@RequestBody Compliance compliance) throws AccessDeniedException{
         ResponseEntity responseEntity = null;
         try {
             LOGGER.info("updating compliance with id",compliance.getId());
