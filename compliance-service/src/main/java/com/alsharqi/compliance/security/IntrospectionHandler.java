@@ -61,12 +61,12 @@ public class IntrospectionHandler {
     if (splits.length != 2) {
       return false;
     }
-
+try {
     final JSONObject introspectionResponse = getIntrospectionResponse(splits[1]);
 
-    try {
+
       return introspectionResponse.getBoolean("active");
-    } catch (JSONException e) {
+    } catch (/*JSON*/Exception e) {
       logger.error("Error while reading introspection response.", e);
       return false;
     }
