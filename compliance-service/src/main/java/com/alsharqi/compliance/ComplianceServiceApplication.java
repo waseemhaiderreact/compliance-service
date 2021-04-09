@@ -6,9 +6,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 //import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+//import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -19,7 +20,8 @@ import java.util.TimeZone;
 //import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 
 @SpringBootApplication
-@EnableResourceServer
+//@EnableResourceServer
+@EnableFeignClients("com.alsharqi.compliance")
 @EnableBinding(CustomChannels.class)
 public class ComplianceServiceApplication {
 
