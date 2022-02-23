@@ -331,7 +331,7 @@ public class ComplianceService {
             Compliance compliance = complianceRepository.save(request);
             /*Sending a compliance to the search service*/
             kafkaAsynService.sendCompliance(compliance);
-            if(compliance!=null){
+            if(compliance!=null && complianceDocument.size() > 0){
                 List<MultipleFileUploadPOSTResponse> list=uploadMultipleCompliancesDocuments(complianceDocument,compliance.getId(),username);
                 if(list.size()>0)
                 {
@@ -342,13 +342,13 @@ public class ComplianceService {
                         document.setDocumentUUID(mapper.getDocumentUUID());
                         documentRepository.save(document);
                     }
-                    responseEntity = new ResponseEntity<>("Document Saved", HttpStatus.OK);
+                    return new ResponseEntity<>("Document Saved and Compliance added", HttpStatus.OK);
                 }
                 else {
-                    responseEntity = new ResponseEntity<>("Document Not Saved", HttpStatus.CONFLICT);
+                    return new ResponseEntity<>("Document Not Saved but Compliance added", HttpStatus.CONFLICT);
                 }
             }
-            //responseEntity = new ResponseEntity<>(, HttpStatus.OK);
+            return new ResponseEntity<>("", HttpStatus.OK);
         }catch (Exception e){
             LOGGER.info("cannot save a compliance using mapper",e);
             responseEntity = new ResponseEntity<>("Cannot save a compliance using mapper", HttpStatus.INTERNAL_SERVER_ERROR);
