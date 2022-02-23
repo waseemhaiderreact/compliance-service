@@ -219,7 +219,17 @@ public class ComplianceController {
             ObjectMapper objectMapper=new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
             Compliance mapper=objectMapper.readValue(request,Compliance.class);
             LOGGER.info("Adding Compliance with compliance number : "+mapper.getComplianceNumber());
-            responseEntity = new ResponseEntity<>(complianceService.saveComplianceMapper(mapper,complianceDocument,userName),HttpStatus.OK);
+            ResponseEntity responseEntity1 = complianceService.saveComplianceMapper(mapper,complianceDocument,userName);
+            if (responseEntity1.getStatusCode() == HttpStatus.OK && complianceDocument.size() > 0){
+                responseEntity = new ResponseEntity<>("Document Saved and Compliance added with compliance number : "+mapper.getComplianceNumber(),HttpStatus.OK);
+            }
+            else if (responseEntity1.getStatusCode() == HttpStatus.CONFLICT){
+                responseEntity = new ResponseEntity<>("Document Not Saved but Compliance added with compliance number : "+mapper.getComplianceNumber(),HttpStatus.OK);
+            }
+            else if (responseEntity1.getStatusCode() == HttpStatus.OK) {
+                responseEntity = new ResponseEntity<>("Compliance Successfully addded with compliance number : " + mapper.getComplianceNumber(), HttpStatus.OK);
+            }
+            return responseEntity;
         }
         catch (AccessDeniedException aed){
             LOGGER.error("Access denied due to privilege not available");
