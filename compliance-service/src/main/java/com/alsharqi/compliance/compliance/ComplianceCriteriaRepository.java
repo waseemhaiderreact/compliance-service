@@ -29,144 +29,26 @@ public class ComplianceCriteriaRepository implements ComplianceCriteriaApi{
     private Boolean dateEqualFlag = false; // to remove previous day records if any present
     private Date dateCheck; // to store date to compare and remove previous day records
 
-    //bring the data by advance filters using advance predicated
+    //bring the data by advance filters using advance predicate
+    //March 2022, removing unnecessary code and refactoring duplicate code within this class
     public Page<CookedCompliance> findComplianceList(ComplianceListFilterRequest filterRequest, Pageable pageable, String sortOrder, String sortByField, List<String> fieldnames, String searchQuery) {
-        List<CookedCompliance> shipments;
+        List<CookedCompliance> complianceResult;
         Page page = null;
         try{
             CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
             CriteriaQuery<CookedCompliance> criteriaQuery = criteriaBuilder.createQuery(CookedCompliance.class);
-            Root<Compliance> shipmentRoot = criteriaQuery.from(Compliance.class);
-            List<Predicate> predicatesAnd = getAdvancePredicates(filterRequest, criteriaBuilder, shipmentRoot);
-            List<Predicate> predicatesOr = getSearchPredicates(fieldnames,searchQuery, criteriaBuilder, shipmentRoot);
+            Root<Compliance> complianceRoot = criteriaQuery.from(Compliance.class);
+            List<Predicate> predicatesAnd = getAdvancePredicates(filterRequest, criteriaBuilder, complianceRoot);
+            List<Predicate> predicatesOr = getSearchPredicates(fieldnames,searchQuery, criteriaBuilder, complianceRoot);
 
             criteriaQuery.where(criteriaBuilder.and(predicatesAnd.toArray(new Predicate[0])), criteriaBuilder.and(predicatesOr.toArray(new Predicate[0])));
-            criteriaQuery.select(criteriaBuilder.construct(CookedCompliance.class, shipmentRoot.get("id"),shipmentRoot.get("declarationNumber"), shipmentRoot.get("declarationState"),
-                    shipmentRoot.get("declarationType"), shipmentRoot.get("creationDate"), shipmentRoot.get("issueDate"), shipmentRoot.get("expiryDate")));
-
-            if(sortOrder.equalsIgnoreCase("asc")){
-                criteriaQuery.orderBy(criteriaBuilder.asc(shipmentRoot.get(sortByField)));
-            }
-            else if(sortOrder.equalsIgnoreCase("desc")){
-                criteriaQuery.orderBy(criteriaBuilder.desc(shipmentRoot.get(sortByField)));
-            }
-            shipments = entityManager.createQuery(criteriaQuery)
-                    .setFirstResult((int) pageable.getOffset())
-                    .setMaxResults(pageable.getPageSize())
-                    .getResultList();
-
-            // this is removing records from result that got matched based on hh:mm:ss in LIKE operation
-            List<CookedCompliance> extractedShipments = new ArrayList<>();
-//            if(val != null){
-//                for ( int i=0; i<shipments.size(); i++){
-//                    Date date = shipments.get(i).getIssueDate();
-//                    if(date != null){
-//                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//                        String strDate = dateFormat.format(date);
-//                        if(strDate.contains(val)){
-//                            extractedShipments.add(0,shipments.get(i));
-//                        }
-//                    }
-//                }
-//                shipments = extractedShipments;
-//            }
-
-            // to remove previous day records if any present in EQUAL Dates
-//            List<CookedCompliance> currentDateShipments = new ArrayList<>();
-//            if(dateEqualFlag.equals(true)){
-//                for ( int i=0; i<shipments.size(); i++){
-//                    Date date = shipments.get(i).getIssueDate();
-//                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//                    String strDate = dateFormat.format(date);
-//                    String prevDate = dateFormat.format(dateCheck);
-//
-//                    if(!strDate.contains(prevDate)){
-//                        currentDateShipments.add(0,shipments.get(i));
-//                    }
-//                }
-//                shipments = currentDateShipments;
-//            }
-
-//            List<CookedDeclaration> currentDateBookings = new ArrayList<>();
-//            if(dateEqualFlag.equals(true))
-//            {
-//                LOGGER.info("Inside date compare function using advance filters");
-//                String strDate;
-//                String prevDate;
-//
-//                String strDate1;
-//                String prevDate1;
-//                Boolean flag=false;
-//                Boolean flag1=false;
-//                Boolean flag2=false;
-//
-//                for ( int i=0; i<shipments.size(); i++){
-//                    Date date = shipments.get(i).getIssueDate();
-//                    if(date.equals(null))
-//                    {
-//                        flag=false;
-//                    }
-//                    else
-//                    {
-//                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//                        strDate = dateFormat.format(date);
-//                        prevDate = dateFormat.format(dateCheck);
-//                        if(!strDate.contains(prevDate))
-//                        {
-//                            flag=true;
-//                        }
-//                    }
-//                    Date date1=shipments.get(i).getCreationDate();
-//                    if(date1.equals(null))
-//                    {
-//                        flag1=false;
-//                    }
-//                    else
-//                    {
-//                        DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
-//                        strDate1 = dateFormat1.format(date);
-//                        prevDate1 = dateFormat1.format(dateCheck);
-//                        if(!strDate1.contains(prevDate1))
-//                        {
-//                            flag1=true;
-//                        }
-//                    }
-//                    Date date2=shipments.get(i).getExpiryDate();
-//                    if(date2.equals(null))
-//                    {
-//                        flag2=false;
-//                    }
-//                    else
-//                    {
-//                        DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
-//                        strDate1 = dateFormat1.format(date);
-//                        prevDate1 = dateFormat1.format(dateCheck);
-//                        if(!strDate1.contains(prevDate1))
-//                        {
-//                            flag2=true;
-//                        }
-//                    }
-//
-//                    if(flag.equals(false) && flag1.equals(false) && flag2.equals(false))
-//                    {
-//
-//                    }
-//                    else
-//                    {
-//                        currentDateBookings.add(0, shipments.get(i));
-//                    }
-//                    flag=false;
-//                    flag1=false;
-//                    flag2=false;
-//                }
-//                shipments=currentDateBookings;
-//            }
+            complianceResult = getCookedCompliances(pageable, sortOrder, sortByField, criteriaBuilder, criteriaQuery, complianceRoot);
 
             CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
             Root<CookedCompliance> booksRootCount = countQuery.from(CookedCompliance.class);
             countQuery.select(criteriaBuilder.count(booksRootCount)).where(criteriaBuilder.and(predicatesAnd.toArray(new Predicate[0])));
             Long count = entityManager.createQuery(countQuery).getSingleResult();
-            page = new PageImpl<>(shipments, pageable, count);
+            page = new PageImpl<>(complianceResult, pageable, count);
         }
         catch (Exception e){
             LOGGER.error("An Error occurred while retrieving filtered data",e);
@@ -196,19 +78,7 @@ public class ComplianceCriteriaRepository implements ComplianceCriteriaApi{
 
 
             criteriaQuery.where(criteriaBuilder.or(predicatesOr.toArray(new Predicate[0])),criteriaBuilder.and(predicatesList.toArray(new Predicate[0])));
-            criteriaQuery.select(criteriaBuilder.construct(CookedCompliance.class,bundleRequestRoot.get("id"), bundleRequestRoot.get("typeOfCompliance"), bundleRequestRoot.get("statusOfCustomer"),
-                    bundleRequestRoot.get("shipmentNumber") ,bundleRequestRoot.get("customer")));
-
-            if(sortOrder.equalsIgnoreCase("asc")){
-                criteriaQuery.orderBy(criteriaBuilder.asc(bundleRequestRoot.get(sortByField)));
-            }
-            else if(sortOrder.equalsIgnoreCase("desc")){
-                criteriaQuery.orderBy(criteriaBuilder.desc(bundleRequestRoot.get(sortByField)));
-            }
-            bundleRequestList = entityManager.createQuery(criteriaQuery)
-                    .setFirstResult((int) pageable.getOffset())
-                    .setMaxResults(pageable.getPageSize())
-                    .getResultList();
+            bundleRequestList = getCookedCompliances(pageable, sortOrder, sortByField, criteriaBuilder, criteriaQuery, bundleRequestRoot);
             CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
             Root<Compliance> booksRootCount = countQuery.from(Compliance.class);
             countQuery.select(criteriaBuilder.count(booksRootCount)).where(criteriaBuilder.and(predicatesOr.toArray(new Predicate[0])));
@@ -219,168 +89,6 @@ public class ComplianceCriteriaRepository implements ComplianceCriteriaApi{
             LOGGER.error("An Error occurred while retrieving data", e);
         }
         return page;
-    }
-
-    public List<Predicate> getAdvancePredicates(ComplianceListFilterRequest filterRequest, CriteriaBuilder criteriaBuilder, Root<Compliance> shipmentRoot) throws ParseException {
-        List<Predicate> predicates = new ArrayList<>();
-        for (ComplianceListFilterRequest.FilterField filterField : filterRequest.getFilterFieldList()) {
-            if (filterField.getCompType().equalsIgnoreCase("=")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1().trim();
-
-                if (filterField.getFieldType().equals("date"))
-                {
-                    dateEqualFlag = true;
-                    // incrementing date by one
-                    Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    Calendar c = Calendar.getInstance();
-                    c.setTime(endDate);
-                    c.add(Calendar.DATE, 1);
-                    endDate = c.getTime();
-
-                    //decrementing date by one
-                    Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(startDate);
-                    int daysToDecrement = -1;
-                    cal.add(Calendar.DATE, daysToDecrement);
-                    startDate = cal.getTime();
-                    dateCheck = startDate;
-
-                    predicates.add(criteriaBuilder.greaterThan(shipmentRoot.get(key), startDate));
-                    predicates.add(criteriaBuilder.lessThan(shipmentRoot.get(key), endDate));
-                }
-                else {
-                    predicates.add(criteriaBuilder.equal(shipmentRoot.get(key), value));
-                }
-
-            }
-            if (filterField.getCompType().equalsIgnoreCase("Like")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-
-                if(filterField.getFieldType().equals("date")){
-                    val = value;
-                }
-                predicates.add(criteriaBuilder.like(shipmentRoot.get(key).as(String.class), "%" + value + "%"));
-
-            }
-            if (filterField.getCompType().equalsIgnoreCase("btw")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-                final String value2  = filterField.getValue2();
-
-                if(filterField.getFieldType().equals("date")){
-                    Date date =  new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    Date date2 =  new SimpleDateFormat("yyyy-MM-dd").parse(value2);
-
-                    // temporary fix to include range end date records as well for any year other than 2020
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(date);
-                    int year1 = cal.get(Calendar.YEAR);
-                    cal.setTime(date2);
-                    int year2 = cal.get(Calendar.YEAR);
-                    if(!(year1 == 2020 || year2 == 2020)){
-                        cal.add(Calendar.DATE, 1);
-                        date2 = cal.getTime();
-                    }
-
-                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(shipmentRoot.get(key),date));
-                    predicates.add(criteriaBuilder.lessThanOrEqualTo(shipmentRoot.get(key),date2));
-                }
-                else{
-                    predicates.add(criteriaBuilder.between(shipmentRoot.get(key), Double.parseDouble(value), Double.parseDouble(value2)));
-                }
-
-            }
-            if (filterField.getCompType().equalsIgnoreCase("!=")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-                if(filterField.getFieldType().equals("date")){
-                    Date date =  new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    predicates.add(criteriaBuilder.notEqual(shipmentRoot.get(key),date));
-                }
-                else {
-                    predicates.add(criteriaBuilder.notEqual(shipmentRoot.get(key), value));
-                }
-            }
-            if (filterField.getCompType().equalsIgnoreCase(">")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-                if(filterField.getFieldType().equals("date")){
-
-                    Date date =  new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    //removing current records for year other than 2020
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(date);
-                    date = cal.getTime();
-                    dateCheck = date;
-                    dateEqualFlag = true;
-
-                    predicates.add(criteriaBuilder.greaterThan(shipmentRoot.get(key),date));
-                }
-                else {
-                    predicates.add(criteriaBuilder.greaterThan(shipmentRoot.get(key), value));
-                }
-            }
-            if (filterField.getCompType().equalsIgnoreCase("<")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-
-                if(filterField.getFieldType().equals("date")){
-                    Date date = new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    predicates.add(criteriaBuilder.lessThan(shipmentRoot.get(key),date));
-                }
-                else {
-                    predicates.add(criteriaBuilder.lessThan(shipmentRoot.get(key), value));
-                }
-            }
-            if (filterField.getCompType().equalsIgnoreCase("<=")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-
-                if(filterField.getFieldType().equals("date")){
-                    Date date = new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    predicates.add(criteriaBuilder.lessThanOrEqualTo(shipmentRoot.get(key),date));
-                }
-                else {
-                    predicates.add(criteriaBuilder.lessThanOrEqualTo(shipmentRoot.get(key), value));
-                }
-            }
-            if (filterField.getCompType().equalsIgnoreCase(">=")) {
-
-                final String key = filterField.getFieldName();
-                final String value = filterField.getValue1();
-
-                if(filterField.getFieldType().equals("date")){
-                    Date date = new SimpleDateFormat("yyyy-MM-dd").parse(value);
-                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(shipmentRoot.get(key),date));
-                }
-                else {
-                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(shipmentRoot.get(key), value));
-                }
-            }
-        }
-        return predicates;
-    }
-
-    public List<Predicate> getSearchPredicates(List<String> fieldNames, String searchQuery, CriteriaBuilder criteriaBuilder, Root<Compliance> declarationRoot){
-        List<Predicate> predicates = new ArrayList<>();
-//        predicates.add(criteriaBuilder.equal(declarationRoot.get("active"), 1));
-        for ( int i =0; i<fieldNames.size(); i++){
-            if(fieldNames.get(i)!= null){
-                predicates.add(criteriaBuilder.like(declarationRoot.get(fieldNames.get(i)).as(String.class),"%" +searchQuery+ "%"));
-                LOGGER.info("Field names: "+fieldNames.get(i));
-            }
-        }
-        return predicates;
     }
 
     public List<Predicate> getPredicatesForRegular(CriteriaBuilder criteriaBuilder, Root<Compliance> bookingRoot)
@@ -408,5 +116,109 @@ public class ComplianceCriteriaRepository implements ComplianceCriteriaApi{
         calendar.set(Calendar.SECOND,59);
         calendar.set(Calendar.MILLISECOND,0);
         return calendar.getTime();
+    }
+
+    //March 2022, created this method for code refactoring
+    private List<CookedCompliance> getCookedCompliances(Pageable pageable, String sortOrder, String sortByField, CriteriaBuilder criteriaBuilder, CriteriaQuery<CookedCompliance> criteriaQuery, Root<Compliance> complianceRoot) {
+        List<CookedCompliance> complianceResult;
+        criteriaQuery.select(criteriaBuilder.construct(CookedCompliance.class, complianceRoot.get("id"),complianceRoot.get("typeOfCompliance"), complianceRoot.get("statusOfCustomer"),
+                complianceRoot.get("shipmentNumber"), complianceRoot.get("customer")));
+
+        if(sortOrder.equalsIgnoreCase("asc")){
+            criteriaQuery.orderBy(criteriaBuilder.asc(complianceRoot.get(sortByField)));
+        }
+        else if(sortOrder.equalsIgnoreCase("desc")){
+            criteriaQuery.orderBy(criteriaBuilder.desc(complianceRoot.get(sortByField)));
+        }
+        complianceResult = entityManager.createQuery(criteriaQuery)
+                .setFirstResult((int) pageable.getOffset())
+                .setMaxResults(pageable.getPageSize())
+                .getResultList();
+        return complianceResult;
+    }
+
+    //March 2022, removing date check as it was unnecessary for the time being
+    //if needed(date check) look for it in the respective classes in Declaration Service for reference
+    public List<Predicate> getAdvancePredicates(ComplianceListFilterRequest filterRequest, CriteriaBuilder criteriaBuilder, Root<Compliance> complianceRoot) throws ParseException {
+        List<Predicate> predicates = new ArrayList<>();
+        for (ComplianceListFilterRequest.FilterField filterField : filterRequest.getFilterFieldList()) {
+            if (filterField.getCompType().equalsIgnoreCase("=")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1().trim();
+
+                predicates.add(criteriaBuilder.equal(complianceRoot.get(key), value));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase("Like")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+
+                predicates.add(criteriaBuilder.like(complianceRoot.get(key).as(String.class), "%" + value + "%"));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase("btw")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+                final String value2  = filterField.getValue2();
+
+                predicates.add(criteriaBuilder.between(complianceRoot.get(key), Double.parseDouble(value), Double.parseDouble(value2)));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase("!=")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+
+                predicates.add(criteriaBuilder.notEqual(complianceRoot.get(key), value));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase(">")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+
+                predicates.add(criteriaBuilder.greaterThan(complianceRoot.get(key), value));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase("<")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+
+                predicates.add(criteriaBuilder.lessThan(complianceRoot.get(key), value));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase("<=")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(complianceRoot.get(key), value));
+
+            }
+            if (filterField.getCompType().equalsIgnoreCase(">=")) {
+
+                final String key = filterField.getFieldName();
+                final String value = filterField.getValue1();
+
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(complianceRoot.get(key), value));
+
+            }
+        }
+        return predicates;
+    }
+
+    public List<Predicate> getSearchPredicates(List<String> fieldNames, String searchQuery, CriteriaBuilder criteriaBuilder, Root<Compliance> complianceRoot){
+        List<Predicate> predicates = new ArrayList<>();
+        for ( int i =0; i<fieldNames.size(); i++){
+            if(fieldNames.get(i)!= null){
+                predicates.add(criteriaBuilder.like(complianceRoot.get(fieldNames.get(i)).as(String.class),"%" +searchQuery+ "%"));
+                LOGGER.info("Field names: "+fieldNames.get(i));
+            }
+        }
+        return predicates;
     }
 }

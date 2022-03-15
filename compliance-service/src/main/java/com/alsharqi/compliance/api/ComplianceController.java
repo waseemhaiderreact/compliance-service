@@ -1,11 +1,13 @@
 package com.alsharqi.compliance.api;
 
+import com.alsharqi.compliance.api.requests.ComplianceListFilterRequest;
 import com.alsharqi.compliance.audittrail.AuditTrail;
 import com.alsharqi.compliance.compliance.Compliance;
 import com.alsharqi.compliance.compliancerequest.ComplianceFilter;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import com.alsharqi.compliance.compliancerequest.ComplianceRequestDocument;
 import com.alsharqi.compliance.compliancetemplate.ComplianceTemplate;
+import com.alsharqi.compliance.cookedcompliance.CookedCompliance;
 import com.alsharqi.compliance.exception.EmptyEntityTableException;
 import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.response.DefaultResponse;
@@ -607,5 +609,27 @@ public class ComplianceController {
     @ResponseBody
     public ResponseEntity fetchFileFromS3Controller(@RequestParam("url") String url){
         return new ResponseEntity(complianceService.getFile(url),HttpStatus.OK);
+    }
+
+    //March 2022, creating endpoint for advance filters
+    //getting compliance based on advance filters
+    @PostMapping(value = "/filteredData", params = {"searchQuery","sortByField", "sortOrder", "page", "size" })
+    @ResponseBody
+    public Page<CookedCompliance> findComplianceListByCriteria(@RequestParam("searchQuery") String searchQuery,
+                                                               @RequestParam("sortByField") String sortByField,
+                                                               @RequestParam("sortOrder") String sortOrder,
+                                                               @RequestParam("page") int page,
+                                                               @RequestParam("size") int size,
+                                                               @RequestBody ComplianceListFilterRequest filterRequest) {
+        Page<CookedCompliance> complianceList = null;
+        LOGGER.info("Parameters of request (Compliance Advance Filters): "+ searchQuery);
+        try{
+            complianceList = cookedComplianceResponseService.getComplianceByAdvanceCriteria("", sortByField, sortOrder, page, size, filterRequest);
+            return  complianceList;
+        }
+        catch(Exception e){
+            LOGGER.info("Exception occurred while retrieving data "+ e);
+            return complianceList; //emptyList
+        }
     }
 }

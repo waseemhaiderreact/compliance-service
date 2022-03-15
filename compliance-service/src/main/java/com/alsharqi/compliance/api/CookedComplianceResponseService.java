@@ -1,7 +1,9 @@
 package com.alsharqi.compliance.api;
 
+import com.alsharqi.compliance.api.requests.ComplianceListFilterRequest;
 import com.alsharqi.compliance.compliance.ComplianceCriteriaRepository;
 import com.alsharqi.compliance.compliancetemplate.ComplianceTemplateCriteriaRepository;
+import com.alsharqi.compliance.cookedcompliance.CookedCompliance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,4 +82,25 @@ public class CookedComplianceResponseService {
         return complianceTemplateCriteriaRepository.findAllByLatest(pageable, sortOrder, sortByField, fieldNames, searchQuery);
     }
 
+    //March 2022, creating method for advance filters
+    //get compliance by advance filters
+    public Page<CookedCompliance> getComplianceByAdvanceCriteria(String searchQuery, String sortByField, String sortOrder, int page, int size, ComplianceListFilterRequest filterRequest) {
+        String inputParam = searchQuery+": "+sortByField+": "+sortOrder+": "+page+": "+size;
+        Pageable pageable;
+        List<String> fieldNames = new ArrayList<>();
+        try{
+            pageable = new PageRequest(page, size, null);
+            fieldNames.add("typeOfCompliance");
+            fieldNames.add("statusOfCustomer");
+            fieldNames.add("shipmentNumber");
+            fieldNames.add("customer");
+
+            return complianceCriteriaRepository.findComplianceList(filterRequest, pageable, sortOrder, sortByField, fieldNames, searchQuery);
+
+        }
+        catch (Exception e){
+            LOGGER.error("Exception occurred while fetching Compliance List (Advance Filters) Input Parameters= "+inputParam, e);
+            return null;
+        }
+    }
 }
