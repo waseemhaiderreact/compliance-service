@@ -28,6 +28,7 @@ import com.alsharqi.compliance.events.shipment.ShipmentModel;
 import com.alsharqi.compliance.events.shipment.ShipmentSourceBean;
 import com.alsharqi.compliance.events.shipment.ShipmentStatus;
 
+import com.alsharqi.compliance.issuingauthority.IssuingAuthority;
 import com.alsharqi.compliance.location.Location;
 import com.alsharqi.compliance.methodsecurity.PrivilegeHandler;
 import com.alsharqi.compliance.notification.Notification;
@@ -194,14 +195,60 @@ public class ComplianceService {
     }
 
     //saving a compliance template
+    //March 2022, adding duplication check for templates
     ResponseEntity<?> saveComplianceTemplate(ComplianceTemplate complianceTemplate){
         ResponseEntity responseEntity = null;
+        boolean flag = false;
         try{
-            LOGGER.info("saving a compliance template");
-            responseEntity = new ResponseEntity<>(complianceTemplateRepository.save(complianceTemplate), HttpStatus.OK);
+            //Get list against passed compliance type from template table
+            List<ComplianceTemplate> typeList = complianceTemplateRepository.findComplianceListByTypeOfCompliance(complianceTemplate.getTypeOfCompliance());
+            //get the list passed in request
+            Set<IssuingAuthority> reqSet = complianceTemplate.getIssuingAuthorities();
+            List<IssuingAuthority> reqList = new ArrayList<>(reqSet);
+            Integer reqSize = reqList.size();
+
+            for (int i = 0; i < typeList.size(); i++) {
+                ComplianceTemplate temp = typeList.get(i);
+                //get issuing authority against one record from the list
+                Set<IssuingAuthority> issuingAuthoritySet = temp.getIssuingAuthorities();
+                List<IssuingAuthority> issuingAuthorities = new ArrayList<>(issuingAuthoritySet);
+                Integer authSize = issuingAuthorities.size();
+                //counter(matched criteria) for the elements passed in the list in request
+                Integer count = 0;
+
+                for(int j = 0; j < authSize; j++){
+                    IssuingAuthority auth = issuingAuthorities.get(j);
+
+                    for (int k = 0; k < reqSize; k++) {
+                        IssuingAuthority authReq = reqList.get(k);
+                        if(auth.getAuthorityName().equalsIgnoreCase(authReq.getAuthorityName()) &&
+                                auth.getCountry().equalsIgnoreCase(authReq.getCountry()) &&
+                                auth.getLocation().equalsIgnoreCase(authReq.getLocation())){
+                            count++;
+                        }
+                        if(count == reqSize && count == authSize) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    if(flag)
+                        break;
+                }
+                if(flag)
+                    break;
+            }
+
+            if(flag){
+                LOGGER.info("Cannot Insert Duplicate Record");
+                responseEntity = new ResponseEntity<>("Cannot Insert Duplicate Record", HttpStatus.CONFLICT);
+            }else{
+                LOGGER.info("Saving a Compliance Template");
+                responseEntity = new ResponseEntity<>(complianceTemplateRepository.save(complianceTemplate), HttpStatus.OK);
+            }
+
         }catch (Exception e){
-            LOGGER.info("cannot save a compliance ",e);
-            responseEntity = new ResponseEntity<>("Cannot save a compliance template", HttpStatus.INTERNAL_SERVER_ERROR);
+            LOGGER.info("Cannot save a Compliance Template ",e);
+            responseEntity = new ResponseEntity<>("Cannot save a Compliance Template", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntity;
     }
