@@ -195,11 +195,16 @@ public class ComplianceService {
     }
 
     //saving a compliance template
-    //March 2022, adding duplication check for templates
+    //March 2022, adding duplication check for templates, for create and update
     ResponseEntity<?> saveComplianceTemplate(ComplianceTemplate complianceTemplate){
         ResponseEntity responseEntity = null;
         boolean flag = false;
         try{
+            //for update call
+            ComplianceTemplate existingRecord = null;
+            if(complianceTemplate.getId() != null){
+                existingRecord = complianceTemplateRepository.findComplianceTemplateById(complianceTemplate.getId());
+            }
             //Get list against passed compliance type from template table
             List<ComplianceTemplate> typeList = complianceTemplateRepository.findComplianceListByTypeOfCompliance(complianceTemplate.getTypeOfCompliance());
             //get the list passed in request
@@ -226,6 +231,10 @@ public class ComplianceService {
                                 auth.getLocation().equalsIgnoreCase(authReq.getLocation())){
                             count++;
                         }
+                        //in case of update, it should skip itself
+                        if(existingRecord != null && existingRecord == temp)
+                            count--;
+
                         if(count == reqSize && count == authSize) {
                             flag = true;
                             break;
