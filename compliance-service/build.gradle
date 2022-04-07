@@ -47,9 +47,13 @@ dependencies {
 	//JMS Configuration
 
 	//liquibase
-
 	implementation 'org.liquibase:liquibase-core:3.4.1'
 	implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.9'
+
+	//Eureka dependencies
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
 	//Aws
 	compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.133'
 
