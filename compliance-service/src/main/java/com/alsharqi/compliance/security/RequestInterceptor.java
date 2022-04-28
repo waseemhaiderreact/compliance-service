@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -20,6 +21,11 @@ public class RequestInterceptor extends HandlerInterceptorAdapter {
 
     private IntrospectionHandler introspectionHandler;
 
+    @PostConstruct
+    void initIntrospectionHandler(){
+        this.introspectionHandler = new IntrospectionHandler(introspectionEndpoint,true);
+    }
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
@@ -27,8 +33,8 @@ public class RequestInterceptor extends HandlerInterceptorAdapter {
 
         try{
 
-            if(this.introspectionHandler == null)
-                this.introspectionHandler = new IntrospectionHandler(introspectionEndpoint,true);
+//            if(this.introspectionHandler == null)
+//                this.introspectionHandler = new IntrospectionHandler(introspectionEndpoint,true);
 
             // Validate for authorization
             if (!this.introspectionHandler.isAuthorized(bearerToken)) {
@@ -36,7 +42,7 @@ public class RequestInterceptor extends HandlerInterceptorAdapter {
                 response.getWriter().write("Sorry.Invalid/Revoked/Expired Access Token.");
                 return false;
             }
-            return true;
+
         }catch(Exception e){
             LOGGER.error("An Error occurred while Validating Token "+bearerToken,e);
             e = null;
@@ -44,6 +50,8 @@ public class RequestInterceptor extends HandlerInterceptorAdapter {
         }finally{
             bearerToken = null;
         }
+
+        return true;
     }
 
 

@@ -13,6 +13,7 @@ import com.alsharqi.compliance.organizationidclass.ListOrganization;
 import com.alsharqi.compliance.response.DefaultResponse;
 import com.alsharqi.compliance.util.AccessDeniedException;
 import com.alsharqi.compliance.util.ApplicationException;
+import com.alsharqi.compliance.util.Util;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
@@ -48,6 +49,8 @@ public class ComplianceController {
     @RequestMapping(value = "/record/info", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<Compliance> saveCompliance(@RequestBody Compliance compliance){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("Adding a new compliance");
@@ -55,6 +58,9 @@ public class ComplianceController {
         }catch (Exception e){
             LOGGER.error("Cannot Add a new compliance",e);
             responseEntity = new ResponseEntity<>("Cannot add a new compliance",HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return responseEntity;
     }
@@ -63,6 +69,8 @@ public class ComplianceController {
     @RequestMapping(value = "/template/record/info", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<Compliance> saveComplianceTemplate(@RequestBody ComplianceTemplate complianceTemplate){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("Adding a new compliance template");
@@ -70,6 +78,9 @@ public class ComplianceController {
         }catch (Exception e){
             LOGGER.error("Cannot Add a new compliance template",e);
             responseEntity = new ResponseEntity<>("Cannot add a new compliance template",HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return responseEntity;
     }
@@ -83,6 +94,8 @@ public class ComplianceController {
                                                                @RequestParam("sortOrder") String sortOrder,
                                                                @RequestParam("page") int page,
                                                                @RequestParam("size") int size){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         Page<Compliance> data = null;
         String inputParam = searchQuery+": "+sortByField+": "+sortOrder+": "+page+": "+size;
         LOGGER.info("Received parameters For Simple/Search (No Filters) are "+inputParam);
@@ -92,6 +105,9 @@ public class ComplianceController {
         }
         catch (Exception e) {
             LOGGER.error("Exception occured while fetching filtered/sorted/paginated Compliance List Input Parameters= "+inputParam, e);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return data;
     }
@@ -100,6 +116,8 @@ public class ComplianceController {
     @RequestMapping(value = "/templates", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<List<ComplianceTemplate>> getAllComplainceTemplates(){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         List<ComplianceTemplate> complianceTemplates = new ArrayList<ComplianceTemplate>();
         try{
@@ -110,6 +128,9 @@ public class ComplianceController {
         }catch (Exception e) {
             LOGGER.error("Cannot fetch all compliance templates", e);
             responseEntity = new ResponseEntity<>("Cannot get all the compliance", HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return  responseEntity;
     }
@@ -118,6 +139,8 @@ public class ComplianceController {
     @RequestMapping(value = "/audit/{complianceNumber}", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<?> getAuditByComplianceNumber(@PathVariable String complianceNumber){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity;
         List<AuditTrail> auditTrails = new ArrayList<AuditTrail>();
         try{
@@ -127,6 +150,9 @@ public class ComplianceController {
         }catch (Exception e){
             LOGGER.info("Cannot get the audit trail against compliance number ",complianceNumber);
             responseEntity = new ResponseEntity<>("cannot get audit history based on compliance number"+complianceNumber,HttpStatus.OK);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return responseEntity;
     }
@@ -135,6 +161,8 @@ public class ComplianceController {
     @RequestMapping(value = "/template/{typeOfCompliance}", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<?> getComplainceTemplateByTypeOfCompliance(@PathVariable String typeOfCompliance){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("Fetching a template based on type ",typeOfCompliance);
@@ -143,6 +171,9 @@ public class ComplianceController {
         }catch (Exception e) {
             LOGGER.error("Cannot fetch a template based on its type " + typeOfCompliance, e);
             responseEntity = new ResponseEntity<>("Cannot get a compliance template based on type", HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return  responseEntity;
     }
@@ -151,6 +182,8 @@ public class ComplianceController {
     @RequestMapping(value = "/template/record/{templateId}", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<?> getComplainceTemplateById(@PathVariable Long templateId){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
 
         try{
@@ -159,6 +192,9 @@ public class ComplianceController {
         }catch (Exception e) {
             LOGGER.error("Cannot fetch a template with id " + templateId, e);
             responseEntity = new ResponseEntity<>("Cannot get a compliance template", HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return  responseEntity;
     }
@@ -167,6 +203,8 @@ public class ComplianceController {
     @RequestMapping(value = "/record/{complianceId}", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<?> getComplaincById(@PathVariable Long complianceId) throws AccessDeniedException{
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try{
             LOGGER.info("Fetching a compliance based on its id ",complianceId);
@@ -179,6 +217,9 @@ public class ComplianceController {
         catch (Exception e) {
             LOGGER.error("Cannot fetch a compliance with id " + complianceId, e);
             responseEntity = new ResponseEntity<>("Cannot get a compliance ", HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return  responseEntity;
     }
@@ -192,6 +233,8 @@ public class ComplianceController {
                                                             @RequestParam("sortOrder") String sortOrder,
                                                             @RequestParam("page") int page,
                                                             @RequestParam("size") int size){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         Page<Compliance> data = null;
         String inputParam = searchQuery+": "+sortByField+": "+sortOrder+": "+page+": "+size;
         LOGGER.info("Received parameters For Simple/Search (No Filters) are "+inputParam);
@@ -201,6 +244,9 @@ public class ComplianceController {
         }
         catch (Exception e) {
             LOGGER.error("Exception occured while fetching filtered/sorted/paginated Compliance template List Input Parameters= "+inputParam, e);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return data;
     }
@@ -215,6 +261,8 @@ public class ComplianceController {
     ResponseEntity addCompliance(@RequestParam("complianceDocument") List<MultipartFile> complianceDocument,
                                             @RequestParam("compliances") String request,
                                             @RequestParam("userName") String userName) throws AccessDeniedException {
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try {
             LOGGER.info("adding a new compliance using object mapper");
@@ -240,6 +288,9 @@ public class ComplianceController {
         catch (Exception e){
             LOGGER.error("cannot save a mapper object",e);
             responseEntity = new ResponseEntity<>("Cannot save compliance with mapper",HttpStatus.OK);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return responseEntity;
     }
@@ -248,6 +299,8 @@ public class ComplianceController {
     @RequestMapping(value = "/template/record/update", method = RequestMethod.PUT)
     @ResponseBody
     public ResponseEntity<?> updateComplianceTemplate(@RequestBody ComplianceTemplate complianceTemplate){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try {
             LOGGER.info("updating compliance template with id",complianceTemplate.getId());
@@ -255,6 +308,9 @@ public class ComplianceController {
         }catch (Exception e){
             LOGGER.error("Cannot update compliance template with id ",complianceTemplate.getId());
             responseEntity = new ResponseEntity("Could not update compliance template",HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
         return responseEntity;
     }
@@ -263,6 +319,8 @@ public class ComplianceController {
     @RequestMapping(value = "/record/update", method = RequestMethod.PUT)
     @ResponseBody
     public ResponseEntity<?> updateCompliance(@RequestBody Compliance compliance) throws AccessDeniedException{
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try {
             LOGGER.info("updating compliance with id",compliance.getId());
@@ -283,6 +341,8 @@ public class ComplianceController {
     @RequestMapping(value = "/template/duedate", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<?> getRelativeDate(){
+        Util util = new Util();
+        util.setThreadContextForLogging();
         ResponseEntity responseEntity = null;
         try {
             LOGGER.info("Getting relative date for due date");
@@ -621,6 +681,9 @@ public class ComplianceController {
                                                                @RequestParam("page") int page,
                                                                @RequestParam("size") int size,
                                                                @RequestBody ComplianceListFilterRequest filterRequest) {
+
+        Util util = new Util();
+        util.setThreadContextForLogging();
         Page<CookedCompliance> complianceList = null;
         LOGGER.info("Parameters of request (Compliance Advance Filters): "+ searchQuery);
         try{
@@ -630,6 +693,9 @@ public class ComplianceController {
         catch(Exception e){
             LOGGER.info("Exception occurred while retrieving data "+ e);
             return complianceList; //emptyList
+        }finally{
+            util.clearThreadContextForLogging();
+            util = null;
         }
     }
 }
