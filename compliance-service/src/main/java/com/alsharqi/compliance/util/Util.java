@@ -86,7 +86,7 @@ public class Util {
 
     public static boolean containsAnyWord(String inputString, String[] items) {
         boolean found = false;
-        return Arrays.stream(items).anyMatch(role -> role.equals(inputString));
+        return Arrays.stream(items).anyMatch(role -> inputString.contains(role));
     }
 
     public static boolean containsPrivilege(List<String> principalStringAuthorities, String[] items) {
