@@ -16,7 +16,7 @@ ext {
 
 configurations {
 	providedRuntime
-	all*.exclude module: 'spring-boot-starter-logging'
+//	all*.exclude module: 'spring-boot-starter-logging'
 }
 
 dependencies {

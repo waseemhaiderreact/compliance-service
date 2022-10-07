@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: compliance-service
+  name: compliance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compliance-service
+  template:
+    metadata:
+      labels:
+        app: compliance-service
+    spec:
+      containers:
+      - name: compliance-service
+        image: 218828204349.dkr.ecr.eu-west-2.amazonaws.com/compliance-service-docker-repo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9211
+          name: http
+          protocol: TCP
+
+# service type loadbalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: compliance-service
+    k8s-app: compliance-service
+  name: compliance-service
+spec:
+  ports:
+  - name: http
+    port: 9211
+    protocol: TCP
+    targetPort: 9211
+  type: LoadBalancer
+  selector:
+    app: compliance-service
