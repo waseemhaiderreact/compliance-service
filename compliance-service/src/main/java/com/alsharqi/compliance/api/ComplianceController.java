@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@CrossOrigin
+//// @CrossOrigin
 @RequestMapping(path="/compliances")
 public class ComplianceController {
     private static final Logger LOGGER = LogManager.getLogger(ComplianceController.class);
@@ -530,7 +530,7 @@ public class ComplianceController {
 //    }
 //
 //    //Task:432 Re-Index Compliance Request -Ammar
-//    @CrossOrigin
+//    // @CrossOrigin
 //    @PostMapping(path="/re-index")
 //    public @ResponseBody
 //    ResponseEntity ReIndexComplianceRequests() throws EmptyEntityTableException {

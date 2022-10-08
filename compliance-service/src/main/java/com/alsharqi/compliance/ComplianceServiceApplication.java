@@ -40,15 +40,15 @@ public class ComplianceServiceApplication {
 		return builder.sources(SpringApplicationBuilder.class).bannerMode(Banner.Mode.OFF);
 	}
 
-	@Bean
-	public WebMvcConfigurer corsConfigurer() {
-		return new WebMvcConfigurerAdapter() {
-			@Override
-			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**").allowedOrigins("*");
-			}
-		};
-	}
+	// @Bean
+	// public WebMvcConfigurer corsConfigurer() {
+	// 	return new WebMvcConfigurerAdapter() {
+	// 		@Override
+	// 		public void addCorsMappings(CorsRegistry registry) {
+	// 			registry.addMapping("/**").allowedOrigins("*");
+	// 		}
+	// 	};
+	// }
 
 	@PostConstruct
 	public void init(){
