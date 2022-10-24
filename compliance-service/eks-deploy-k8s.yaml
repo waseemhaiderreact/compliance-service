@@ -5,7 +5,7 @@ metadata:
     app: compliance-service
   name: compliance-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: compliance-service
@@ -23,7 +23,7 @@ spec:
           name: http
           protocol: TCP
 
-# service type loadbalancer
+# service type ClusterIP
 ---
 apiVersion: v1
 kind: Service
@@ -38,6 +38,6 @@ spec:
     port: 9211
     protocol: TCP
     targetPort: 9211
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: compliance-service
