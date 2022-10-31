@@ -130,20 +130,20 @@ public  class InterceptorConfig implements WebMvcConfigurer {
         return null;
     }
 
-    @Bean
-    public FilterRegistrationBean corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOrigin("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", config);
-        FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
-        // bean.setOrder(0);
-        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        return bean;
-    }
+    // @Bean
+    // public FilterRegistrationBean corsFilter() {
+    //     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    //     CorsConfiguration config = new CorsConfiguration();
+    //     config.setAllowCredentials(true);
+    //     config.addAllowedOrigin("*");
+    //     config.addAllowedHeader("*");
+    //     config.addAllowedMethod("*");
+    //     source.registerCorsConfiguration("/**", config);
+    //     FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
+    //     // bean.setOrder(0);
+    //     bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    //     return bean;
+    // }
 
     @Bean
     public DataSource dataSource() {

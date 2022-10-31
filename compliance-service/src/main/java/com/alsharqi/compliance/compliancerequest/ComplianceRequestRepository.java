@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import javax.transaction.Transactional;
 import java.util.Date;
 
-@CrossOrigin
+// @CrossOrigin
 @Repository
 public interface ComplianceRequestRepository extends JpaRepository<ComplianceRequest,Long> {
 
