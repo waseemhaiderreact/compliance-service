@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="APP_LOG_ROOT">/var/log/als</Property>
+        <Property name="PROJECT_NAME">compliance-service</Property>
+        <Property name="NODE_NAME">${env:MY_NODE_NAME}</Property>
+        <Property name="POD_NAMESPACE">${env:MY_POD_NAMESPACE}</Property>
+        <Property name="POD_NAME">${env:MY_POD_NAME}</Property>
+        <Property name="LOG_PATTERN">%notEmpty{user = %X{userId}}, %notEmpty{sessionId = %X{sessionId}} ,  %d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}:${PROJECT_NAME} , %t , %C.%M , %p ,  %m%n</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+        </Console>
+
+        <RollingFile name="appLog"
+                     fileName="${APP_LOG_ROOT}/als#${PROJECT_NAME}#${NODE_NAME}#${POD_NAMESPACE}#${POD_NAME}.log"
+                     filePattern="${APP_LOG_ROOT}/als#${PROJECT_NAME}#${NODE_NAME}#${POD_NAMESPACE}#${POD_NAME}#%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="2MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="20" />
+        </RollingFile>
+
+    </Appenders>
+    <Loggers>
+
+        <Logger name="com.alsharqi.compliance" additivity="false">
+            <AppenderRef ref="appLog" />
+             <!--<AppenderRef ref="Console" />-->
+        </Logger>
+
+        <Root level="info">
+        <AppenderRef ref="appLog" />
+             <!--<AppenderRef ref="Console" />-->
+        </Root>
+    </Loggers>
+</Configuration>
