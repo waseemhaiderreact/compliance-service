@@ -1291,8 +1291,8 @@ public class ComplianceService {
         }
     }
 
-    public Iterable<ComplianceRequest> getAllComplianceRequestsByShipmentNumber(String shipmentNumber) {
-        return complianceRequestRepository.findAllByShipmentNumber(shipmentNumber);
+    public Iterable<Compliance> getAllComplianceByShipmentNumber(String shipmentNumber) {
+        return complianceRepository.findAllByShipmentNumber(shipmentNumber);
     }
 
 //    public Iterable<Compliance> getAllCompliancesWithFilter(ComplianceFilter complianceFilter, int offset, int limit) {
