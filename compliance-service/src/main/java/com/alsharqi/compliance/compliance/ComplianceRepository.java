@@ -1,5 +1,6 @@
 package com.alsharqi.compliance.compliance;
 
+import com.alsharqi.compliance.compliancerequest.ComplianceRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,11 @@ import java.util.List;
 @Repository
 public interface ComplianceRepository extends JpaRepository<Compliance,Long> {
     Compliance findComplianceById(Long id);
+    //Implemented By Ali Akbar
+    @Query("select compliance from Compliance compliance where compliance.shipmentNumber =:shipmentNumber")
+    public Iterable<Compliance> findAllByShipmentNumber(String shipmentNumber);
+
+//    Iterable<ComplianceRequest> findAllByShipmentNumber(String shipmentNumber);
 //    public Page<Compliance> findAllByDueDateAfterAndDueDateBeforeAndStatusOrderByIdDesc(Date sDate, Date eDate, String status, Pageable page);
 //    public Page<Compliance> findAllByDueDateAfterAndDueDateBeforeOrderByIdDesc(Date sDate,Date eDate,Pageable page);
 //

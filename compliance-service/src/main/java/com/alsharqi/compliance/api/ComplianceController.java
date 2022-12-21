@@ -457,9 +457,9 @@ public class ComplianceController {
 
     @RequestMapping(value="/requests",method= RequestMethod.GET)
     @ResponseBody
-    public ResponseEntity findAllRequestsByShipmentNumber(@RequestParam("shipmentNumber") String shipmentNumber) throws EmptyEntityTableException {
-        return Optional.ofNullable(complianceService.getAllComplianceRequestsByShipmentNumber(shipmentNumber))
-                .map(resp -> new ResponseEntity<Iterable<ComplianceRequest>>(resp, HttpStatus.OK))
+    public ResponseEntity findAllComplianceByShipmentNumber(@RequestParam("shipmentNumber") String shipmentNumber) throws EmptyEntityTableException {
+        return Optional.ofNullable(complianceService.getAllComplianceByShipmentNumber(shipmentNumber))
+                .map(resp -> new ResponseEntity<Iterable<Compliance>>(resp, HttpStatus.OK))
                 .orElseThrow(() -> new EmptyEntityTableException("No request exists.",0L));
     }
 
